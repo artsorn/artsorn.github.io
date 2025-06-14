@@ -685,18 +685,29 @@
     
     try {
         this.isLoading = true;
-        await BettingService.recordBetResult(
-            this.currentLineId, 
-            resultType, 
-            parseInt(betAmount), 
-            `Bet recorded via web app`
-        );
-        alert(`Bet recorded as ${resultType}`);
+        
+        
+
+        // line-description
+
+        await BettingService.updateBettingLineDescription(this.currentLineId, "");
+
+        
         
         // Refresh the line details
         const updatedLine = await Database.getBettingLineById(this.currentLineId);
         if (updatedLine) {
-            this.showLineActions(updatedLine);
+            const description = document.getElementById('line-description').value;
+            document.getElementById('line-description').value = "";
+            await BettingService.recordBetResult(
+                this.currentLineId, 
+                resultType, 
+                parseInt(betAmount), 
+                description
+            );
+            // this.showLineActions(updatedLine);
+            alert(`Bet recorded as ${resultType}`);
+            this.showScreen('lines');
         }
     } catch (error) {
         alert(`Error recording ${resultType} bet`);
