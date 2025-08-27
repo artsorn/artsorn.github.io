@@ -80,16 +80,16 @@
   <div class="container">
     <div class="header">
       <h1>🎯 Fibonacci Calculator</h1>
-      <p>Rule: lose → next index, win → step back 2</p>
+      <p>Rule: lose → next index, win → step back 2 • Stake = (base × Fibonacci) ÷ net odds (rounded)</p>
     </div>
 
     <div class="main">
       <!-- LEFT: Overall + Next Bet + Series list -->
       <section>
         <div class="stats">
-          <!-- <h3>📈 Overall</h3> -->
+          <h3>📈 Overall</h3>
           <div class="total" id="totalProfit">0</div>
-          <!-- <div>THB</div> -->
+          <div>THB</div>
         </div>
 
         <!-- Next Bet directly under Overall -->
@@ -173,14 +173,20 @@
       return Math.max(0, o); // net odds only (0.95 default)
     }
     function calcStake(series, fibIndex, odds){
-      // Stake = (base × Fibonacci(seq)) / netOdds  (rounded to nearest integer)
+      // New stake formula:
+      // stake = (base * Fibonacci(seq)) / netOdds  +  max(0, (lossBalance - base)/2)
+      // Then round to nearest integer; minimum 1.
       const net = getNetOdds(odds);
-      if(net <= 0){ return { stake:0, target:0, netOdds:0 }; }
       const idx = Math.min(fibIndex, gameData.fibSequence.length-1);
-      const target = series.minBet * gameData.fibSequence[idx];
-      const raw = target / net;
+      const fibVal = gameData.fibSequence[idx];
+      const base = series.minBet;
+      const lossBal = Math.max(0, Number(series.lossBalance || 0));
+      if(net <= 0){ return { stake:0, target:0, netOdds:0 }; }
+      const basePart = (base * fibVal) / net;
+      const extra = lossBal > base ? (lossBal - base) / 2 : 0; // only add if lossBal > base
+      const raw = basePart + extra;
       const stake = Math.max(1, Math.round(raw));
-      return { stake, target, netOdds: net };
+      return { stake, target: base * fibVal, netOdds: net };
     }
 
     // ====== CRUD ======
@@ -188,7 +194,7 @@
       const minBet = Math.max(1, parseInt(document.getElementById('minBet').value||'10'));
       gameData.minBet = minBet;
       const s = { id: Date.now(), name: `Series ${gameData.series.length+1}`, minBet,
-        currentFibIndex: 0, games: [], totalProfit: 0, isCompleted:false, currentBetting:null };
+        currentFibIndex: 0, games: [], totalProfit: 0, isCompleted:false, currentBetting:null, lossBalance:0, winStreak:0 };
       gameData.series.push(s); updateDisplay(); saveData();
     }
     function resetAll(){
@@ -205,6 +211,8 @@
       if(!sid){ alert('Please choose a series'); return; }
       if(!name){ alert('Please enter a match name'); return; }
       const series = gameData.series.find(s=>s.id===sid); if(!series) return;
+      if(typeof series.lossBalance !== 'number') series.lossBalance = 0;
+      if(typeof series.winStreak !== 'number') series.winStreak = 0;
 
       const C = calcStake(series, series.currentFibIndex, odds);
       if(!C.netOdds){ alert('Invalid odds'); return; }
@@ -219,11 +227,25 @@
 
     function recordResult(seriesId, isWin){
       const s = gameData.series.find(x=>x.id===seriesId); if(!s || !s.currentBetting) return;
+      if(typeof s.lossBalance !== 'number') s.lossBalance = 0;
+      if(typeof s.winStreak !== 'number') s.winStreak = 0;
       const b = s.currentBetting; const netOdds = getNetOdds(b.odds);
       const profitOnWin = Math.round(b.betAmount * netOdds);
       const netProfit = isWin ? profitOnWin : -b.betAmount;
 
-      if(isWin){ s.currentFibIndex = Math.max(0, s.currentFibIndex - 2); } else { s.currentFibIndex++; }
+      if(isWin){
+        // decrease index by 1 on win; 3 consecutive wins => reset to 0
+        s.currentFibIndex = Math.max(0, s.currentFibIndex - 1);
+        s.winStreak = (s.winStreak || 0) + 1;
+        // reduce outstanding loss balance by the profit won
+        s.lossBalance = Math.max(0, (s.lossBalance || 0) - profitOnWin);
+        if(s.winStreak >= 2){ s.currentFibIndex = 0; s.winStreak = 0; }
+      } else {
+        // on loss, move forward one index; reset streak; add to loss balance
+        s.currentFibIndex++;
+        s.winStreak = 0;
+        s.lossBalance = (s.lossBalance || 0) + b.betAmount;
+      }
 
       const rec = { matchName: b.matchName, odds: b.odds, fibIndex: b.fibIndex, betAmount: b.betAmount, result: isWin? 'Win':'Lose' };
       s.games.push(rec); s.totalProfit += netProfit; s.currentBetting = null;
@@ -302,7 +324,7 @@
         // current betting row — shown first
         let rowCount = 0;
         if(s.currentBetting){
-          const b = s.currentBetting; const d = document.createElement('details'); d.className='row'; d.open = true;
+          const b = s.currentBetting; const d = document.createElement('details'); d.className='row'; 
           d.innerHTML = `
             <summary>
               <span class="badge-mini wait">Betting</span>
@@ -311,7 +333,7 @@
               <span class="col-stake"><b>${b.betAmount.toLocaleString()}฿</b></span>
               <span class="col-fib">(${b.fibIndex})</span>
             </summary>
-            <div class="row-detail">Full match name: ${b.matchName}</div>
+            <div class="row-detail">${b.matchName}</div>
           `;
           rows.appendChild(d); rowCount++;
         }
@@ -328,7 +350,7 @@
               <span class="col-stake"><b>${g.betAmount.toLocaleString()}฿</b></span>
               <span class="col-fib">(${g.fibIndex})</span>
             </summary>
-            <div class="row-detail">Full match name: ${g.matchName}</div>
+            <div class="row-detail">${g.matchName}</div>
           `;
           rows.appendChild(d); rowCount++;
         });
