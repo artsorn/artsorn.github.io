@@ -147,7 +147,7 @@
       <h2>📊 Series Settings</h2>
       <div class="form-group">
         <label class="label">Base unit (THB)</label>
-        <input type="number" id="minBet" value="10" min="1" />
+        <input type="number" id="minBet" value="25" min="1" />
       </div>
 
       <div class="card" style="background:#f8f9fa">
@@ -162,288 +162,319 @@
   </div>
 
   <script>
-    // ====== State ======
-    let gameData = {
-      minBet: 25,
-      lastOdds: 0.95,
-      fibSequence: [1,1,2,3,5,8,13,21,34,55,89,144],
-      series: []
+  // ====== State ======
+  let gameData = {
+    minBet: 25,
+    lastOdds: 0.95,
+    fibSequence: [1,1,2,3,5,8,13,21,34,55,89,144],
+    series: []
+  };
+
+  // ====== Persistence ======
+  function loadData(){
+    try{
+      const saved = JSON.parse(localStorage.getItem('fibonacciBettingNew')||'{}');
+      gameData = { ...gameData, ...saved };
+    }catch(e){}
+    const oddsInput = document.getElementById('odds');
+    if(oddsInput){ oddsInput.value = String(gameData.lastOdds ?? 0.95); }
+    updateDisplay();
+  }
+  function saveData(){ localStorage.setItem('fibonacciBettingNew', JSON.stringify(gameData)); }
+
+  // ====== Math helpers ======
+  function getNetOdds(odds){
+    const o = parseFloat(odds||0);
+    return Math.max(0, o); // net odds only
+  }
+  function calcStake(series, fibIndex, odds){
+    // stake = (base * Fibonacci(seq)) / netOdds + max(0, (lossBalance - base)/2)
+    const net = getNetOdds(odds);
+    if(net <= 0) return { stake:0, target:0, netOdds:0 };
+    const idx = Math.min(fibIndex, gameData.fibSequence.length-1);
+    const fibVal = gameData.fibSequence[idx];
+    const base = series.minBet;
+    const lossBal = Math.max(0, Number(series.lossBalance||0));
+    const basePart = (base * fibVal) / net;
+    const extra = lossBal > base ? (lossBal - base) / 2 : 0;
+    const raw = basePart + extra;
+    const stake = Math.max(1, Math.round(raw));
+    return { stake, target: base * fibVal, netOdds: net };
+  }
+
+  // ====== CRUD ======
+  function createNewSeries(){
+    const minBet = Math.max(1, parseInt(document.getElementById('minBet').value||'25'));
+    gameData.minBet = minBet;
+    const s = {
+      id: Date.now(),
+      name: `Series ${gameData.series.length+1}`,
+      minBet,
+      currentFibIndex: 0,
+      games: [],
+      totalProfit: 0,
+      isCompleted: false,
+      currentBetting: null,
+      lossBalance: 0,
+      winStreak: 0
     };
+    // old -> new: append to end
+    gameData.series.push(s);
+    updateDisplay(); saveData();
+  }
+  function resetAll(){
+    if(!confirm('Reset all data?')) return;
+    gameData = { minBet:25, lastOdds:0.95, fibSequence:[1,1,2,3,5,8,13,21,34,55,89,144], series:[] };
+    updateDisplay(); saveData();
+  }
 
-    // ====== Persistence ======
-    function loadData(){
-      try{ const saved = JSON.parse(localStorage.getItem('fibonacciBettingNew')||'{}'); gameData = { ...gameData, ...saved }; } catch(e){}
-      // set last odds to input if available
-      const oddsInput = document.getElementById('odds');
-      if(oddsInput){ oddsInput.value = String(gameData.lastOdds ?? 0.95); }
-      updateDisplay();
-    }
-    function saveData(){ localStorage.setItem('fibonacciBettingNew', JSON.stringify(gameData)); }
+  // ====== Betting flow ======
+  function startBetting(){
+    const sid = parseInt(document.getElementById('selectedSeries').value);
+    const name = (document.getElementById('matchName').value||'').trim();
+    const odds = parseFloat(document.getElementById('odds').value);
+    if(!sid){ alert('Please choose a series'); return; }
+    if(!name){ alert('Please enter a match name'); return; }
+    const series = gameData.series.find(s=>s.id===sid); if(!series) return;
+    if(typeof series.lossBalance !== 'number') series.lossBalance = 0;
+    if(typeof series.winStreak !== 'number') series.winStreak = 0;
 
-    // ====== Math helpers ======
-    function getNetOdds(odds){
-      const o = parseFloat(odds||0);
-      return Math.max(0, o); // net odds only (0.95 default)
-    }
-    function calcStake(series, fibIndex, odds){
-      // New stake formula:
-      // stake = (base * Fibonacci(seq)) / netOdds  +  max(0, (lossBalance - base)/2)
-      // Then round to nearest integer; minimum 1.
-      const net = getNetOdds(odds);
-      const idx = Math.min(fibIndex, gameData.fibSequence.length-1);
-      const fibVal = gameData.fibSequence[idx];
-      const base = series.minBet;
-      const lossBal = Math.max(0, Number(series.lossBalance || 0));
-      if(net <= 0){ return { stake:0, target:0, netOdds:0 }; }
-      const basePart = (base * fibVal) / net;
-      const extra = lossBal > base ? (lossBal - base) / 2 : 0; // only add if lossBal > base
-      const raw = basePart + extra;
-      const stake = Math.max(1, Math.round(raw));
-      return { stake, target: base * fibVal, netOdds: net };
-    }
+    const C = calcStake(series, series.currentFibIndex, odds);
+    if(!C.netOdds){ alert('Invalid odds'); return; }
 
-    // ====== CRUD ======
-    function createNewSeries(){
-      const minBet = Math.max(1, parseInt(document.getElementById('minBet').value||'10'));
-      gameData.minBet = minBet;
-      const s = { id: Date.now(), name: `Series ${gameData.series.length+1}`, minBet,
-        currentFibIndex: 0, games: [], totalProfit: 0, isCompleted:false, currentBetting:null, lossBalance:0, winStreak:0 };
-      gameData.series.push(s); updateDisplay(); saveData();
-    }
-    function resetAll(){
-      if(!confirm('Reset all data?')) return;
-      gameData = { minBet:25, lastOdds:0.95, fibSequence:[1,1,2,3,5,8,13,21,34,55,89,144], series:[] };
-      updateDisplay(); saveData();
-    }
+    series.currentBetting = { matchName: name, odds, betAmount: C.stake, fibIndex: series.currentFibIndex };
 
-    // ====== Betting flow ======
-    function startBetting(){
-      const sid = parseInt(document.getElementById('selectedSeries').value);
-      const name = (document.getElementById('matchName').value||'').trim();
-      const odds = parseFloat(document.getElementById('odds').value);
-      if(!sid){ alert('Please choose a series'); return; }
-      if(!name){ alert('Please enter a match name'); return; }
-      const series = gameData.series.find(s=>s.id===sid); if(!series) return;
-      if(typeof series.lossBalance !== 'number') series.lossBalance = 0;
-      if(typeof series.winStreak !== 'number') series.winStreak = 0;
+    document.getElementById('selectedSeries').value = '';
+    document.getElementById('matchName').value = '';
+    // remember last odds
+    gameData.lastOdds = isNaN(odds) ? 0.95 : odds; saveData();
+    updateDisplay();
+  }
 
-      const C = calcStake(series, series.currentFibIndex, odds);
-      if(!C.netOdds){ alert('Invalid odds'); return; }
+  function recordResult(seriesId, isWin){
+    const s = gameData.series.find(x=>x.id===seriesId); if(!s || !s.currentBetting) return;
+    if(typeof s.lossBalance !== 'number') s.lossBalance = 0;
+    if(typeof s.winStreak !== 'number') s.winStreak = 0;
+    const b = s.currentBetting; const netOdds = getNetOdds(b.odds);
+    const profitOnWin = Math.round(b.betAmount * netOdds);
+    const netProfit = isWin ? profitOnWin : -b.betAmount;
 
-      series.currentBetting = { matchName: name, odds, betAmount: C.stake, fibIndex: series.currentFibIndex };
-
-      document.getElementById('selectedSeries').value = '';
-      document.getElementById('matchName').value = '';
-      // keep odds as last used (do not reset)
-      updateDisplay(); saveData();
+    if(isWin){
+      s.currentFibIndex = Math.max(0, s.currentFibIndex - 1);
+      s.winStreak = (s.winStreak||0) + 1;
+      s.lossBalance = Math.max(0, (s.lossBalance||0) - profitOnWin);
+      // two consecutive wins -> reset to index 0
+      if(s.winStreak >= 2){ s.currentFibIndex = 0; s.winStreak = 0; }
+    } else {
+      s.currentFibIndex++;
+      s.winStreak = 0;
+      s.lossBalance = (s.lossBalance||0) + b.betAmount;
     }
 
-    function recordResult(seriesId, isWin){
-      const s = gameData.series.find(x=>x.id===seriesId); if(!s || !s.currentBetting) return;
-      if(typeof s.lossBalance !== 'number') s.lossBalance = 0;
-      if(typeof s.winStreak !== 'number') s.winStreak = 0;
-      const b = s.currentBetting; const netOdds = getNetOdds(b.odds);
-      const profitOnWin = Math.round(b.betAmount * netOdds);
-      const netProfit = isWin ? profitOnWin : -b.betAmount;
+    const rec = { matchName: b.matchName, odds: b.odds, fibIndex: b.fibIndex, betAmount: b.betAmount, result: isWin? 'Win':'Lose' };
+    s.games.push(rec); s.totalProfit += netProfit; s.currentBetting = null;
+    updateDisplay(); saveData();
+  }
 
-      if(isWin){
-        // decrease index by 1 on win; 3 consecutive wins => reset to 0
-        s.currentFibIndex = Math.max(0, s.currentFibIndex - 1);
-        s.winStreak = (s.winStreak || 0) + 1;
-        // reduce outstanding loss balance by the profit won
-        s.lossBalance = Math.max(0, (s.lossBalance || 0) - profitOnWin);
-        if(s.winStreak >= 2){ s.currentFibIndex = 0; s.winStreak = 0; }
-      } else {
-        // on loss, move forward one index; reset streak; add to loss balance
-        s.currentFibIndex++;
-        s.winStreak = 0;
-        s.lossBalance = (s.lossBalance || 0) + b.betAmount;
+  function completeSeries(id){
+    const s = gameData.series.find(x=>x.id===id); if(!s) return;
+    s.isCompleted = true; s.currentBetting = null; updateDisplay(); saveData();
+  }
+  function deleteSeries(id){
+    if(!confirm('Delete this series?')) return;
+    gameData.series = gameData.series.filter(x=>x.id!==id); updateDisplay(); saveData();
+  }
+
+  // ====== UI ======
+  function truncTitle(input, max=25){
+    const s = String(input || '');
+    try{
+      if(typeof Intl !== 'undefined' && Intl.Segmenter){
+        const seg = new Intl.Segmenter('th', { granularity: 'grapheme' });
+        const parts = Array.from(seg.segment(s), x => x.segment);
+        if(parts.length > max) return parts.slice(0, max).join('') + '...';
+        return s;
       }
+    }catch(e){}
+    return s.length > max ? s.slice(0, max) + '...' : s;
+  }
 
-      const rec = { matchName: b.matchName, odds: b.odds, fibIndex: b.fibIndex, betAmount: b.betAmount, result: isWin? 'Win':'Lose' };
-      s.games.push(rec); s.totalProfit += netProfit; s.currentBetting = null;
-      updateDisplay(); saveData();
-    }
-
-    function completeSeries(id){ const s = gameData.series.find(x=>x.id===id); if(!s) return; s.isCompleted=true; s.currentBetting=null; updateDisplay(); saveData(); }
-    function deleteSeries(id){ if(!confirm('Delete this series?')) return; gameData.series = gameData.series.filter(x=>x.id!==id); updateDisplay(); saveData(); }
-
-    // ====== UI ======
-    function updateDisplay(){
-      // sequence chips
-      const fc = document.getElementById('fibSequence'); if(fc){ fc.innerHTML=''; gameData.fibSequence.forEach((v,i)=>{ const e=document.createElement('span'); e.className='chip'; e.innerHTML=String(v)+`<span class="i">${i}</span>`; fc.appendChild(e); }); }
-
-      // series selector
-      const sel = document.getElementById('selectedSeries'); if(sel){ sel.innerHTML='<option value="">— Choose —</option>'; gameData.series.filter(s=>!s.isCompleted).forEach(s=>{ const o=document.createElement('option'); o.value=String(s.id); o.textContent=`${s.name} (index: ${s.currentFibIndex})`; sel.appendChild(o); }); }
-
-      // bet panel calculation
-      updateBetCalculationPanel();
-      // list
-      renderSeries();
-      // totals
-      renderTotals();
-    }
-
-    function updateBetCalculationPanel(){
-      const sel = document.getElementById('selectedSeries');
-      const oddsInput = document.getElementById('odds');
-      const betSpan = document.getElementById('calculatedBet');
-      if(!sel || !oddsInput || !betSpan) return;
-
-      function calc(){
-        const sid = parseInt(sel.value); const s = gameData.series.find(x=>x.id===sid);
-        if(!s){ betSpan.textContent = '0'; return; }
-        const odds = parseFloat(oddsInput.value)||0.95; const C = calcStake(s, s.currentFibIndex, odds);
-        betSpan.textContent = (C.stake||0).toLocaleString();
-      }
-      calc(); sel.onchange = calc; oddsInput.oninput = function(){ gameData.lastOdds = parseFloat(this.value||'0.95')||0.95; saveData(); calc(); };
-    }
-
-    function renderSeries(){
-      const wrap = document.getElementById('seriesList'); if(!wrap) return; wrap.innerHTML='';
-      const list = gameData.series.slice().sort((a,b)=> a.id - b.id);
-      list.forEach(s=>{
-        const div = document.createElement('div'); div.className='card series';
-        const pc = s.totalProfit>0? 'pill pos': (s.totalProfit<0? 'pill neg':'pill zero');
-        // header
-        div.innerHTML = `
-          <div class="head">
-            <div class="title">${s.name}</div>
-            <div class="${pc}">${s.totalProfit>0?'+':''}${s.totalProfit.toLocaleString()} ฿</div>
-          </div>
-        `;
-
-        // actions on top
-        const actionsTop = document.createElement('div'); actionsTop.className = 'actions-top';
-        const left = document.createElement('div'); left.className = 'actions-left';
-        const right = document.createElement('div'); right.className = 'actions-right';
-
-        if(s.currentBetting){
-          const btnW = document.createElement('button'); btnW.className = 'btn ok'; btnW.textContent = '✅ Win'; btnW.onclick = function(){ recordResult(s.id, true); };
-          const btnL = document.createElement('button'); btnL.className = 'btn bad'; btnL.textContent = '❌ Lose'; btnL.onclick = function(){ recordResult(s.id, false); };
-          left.appendChild(btnW); left.appendChild(btnL);
-        }
-        const btnC = document.createElement('button'); btnC.className = 'btn sm gray'; btnC.textContent = 'Close'; btnC.onclick = function(){ completeSeries(s.id); };
-        const btnD = document.createElement('button'); btnD.className = 'btn sm bad'; btnD.style.filter = 'none'; btnD.textContent = 'Delete'; btnD.onclick = function(){ deleteSeries(s.id); };
-        right.appendChild(btnC); right.appendChild(btnD);
-
-        actionsTop.appendChild(left); actionsTop.appendChild(right); div.appendChild(actionsTop);
-
-        // rows container
-        const rows = document.createElement('div'); rows.id = `rows-${s.id}`; rows.className = 'rows';
-        div.appendChild(rows);
-        wrap.appendChild(div);
-
-        // current betting row — shown first
-        let rowCount = 0;
-        if(s.currentBetting){
-          const b = s.currentBetting; const d = document.createElement('details'); d.className='row'; 
-          d.innerHTML = `
-            <summary>
-              <span class="badge-mini wait">Betting</span>
-              <span class="col-match truncate" title="${b.matchName}">${b.matchName}</span>
-              <span class="col-odds">${b.odds}</span>
-              <span class="col-stake"><b>${b.betAmount.toLocaleString()}฿</b></span>
-              <span class="col-fib">(${b.fibIndex})</span>
-            </summary>
-            <div class="row-detail">${b.matchName}</div>
-          `;
-          rows.appendChild(d); rowCount++;
-        }
-
-        // finished games — newest first
-        const games = s.games.slice().reverse();
-        games.forEach(function(g){
-          const d = document.createElement('details'); d.className='row';
-          d.innerHTML = `
-            <summary>
-              <span class="badge-mini ${g.result==='Win'?'win':'lose'}">${g.result}</span>
-              <span class="col-match truncate" title="${g.matchName}">${g.matchName}</span>
-              <span class="col-odds">${g.odds}</span>
-              <span class="col-stake"><b>${g.betAmount.toLocaleString()}฿</b></span>
-              <span class="col-fib">(${g.fibIndex})</span>
-            </summary>
-            <div class="row-detail">${g.matchName}</div>
-          `;
-          rows.appendChild(d); rowCount++;
-        });
-
-        // scroll if more than 10 rows
-        if(rowCount > 10){ rows.classList.add('scroll'); }
+  function updateDisplay(){
+    // sequence chips
+    const fc = document.getElementById('fibSequence');
+    if(fc){
+      fc.innerHTML='';
+      gameData.fibSequence.forEach((v,i)=>{
+        const e=document.createElement('span'); e.className='chip'; e.innerHTML=String(v)+`<span class="i">${i}</span>`; fc.appendChild(e);
       });
     }
 
-    function renderTotals(){
-      const total = gameData.series.reduce(function(a,s){ return a + s.totalProfit; }, 0);
-      const el = document.getElementById('totalProfit'); if(!el) return;
-      el.textContent = (total>0?'+':'') + total.toLocaleString();
-      el.className = 'total ' + (total>0? 'pos' : (total<0? 'neg':'zero'));
+    // series selector
+    const sel = document.getElementById('selectedSeries');
+    if(sel){
+      sel.innerHTML='<option value="">— Choose —</option>';
+      gameData.series.filter(s=>!s.isCompleted).forEach(s=>{
+        const o=document.createElement('option'); o.value=String(s.id); o.textContent=`${s.name} (index: ${s.currentFibIndex})`; sel.appendChild(o);
+      });
     }
 
-    // ====== Init ======
-    document.addEventListener('DOMContentLoaded', function(){
-      loadData();
-      var mb = document.getElementById('minBet');
-      if(mb){ mb.addEventListener('change', function(){ gameData.minBet = Math.max(1, parseInt(this.value||'10')); updateDisplay(); saveData(); }); }
+    updateBetCalculationPanel();
+    renderSeries();
+    renderTotals();
+  }
+
+  function updateBetCalculationPanel(){
+    const sel = document.getElementById('selectedSeries');
+    const oddsInput = document.getElementById('odds');
+    const betSpan = document.getElementById('calculatedBet');
+    if(!sel || !oddsInput || !betSpan) return;
+
+    function calc(){
+      const sid = parseInt(sel.value);
+      const s = gameData.series.find(x=>x.id===sid);
+      if(!s){ betSpan.textContent = '0'; return; }
+      const odds = parseFloat(oddsInput.value)||0.95; const C = calcStake(s, s.currentFibIndex, odds);
+      betSpan.textContent = (C.stake||0).toLocaleString();
+    }
+    calc();
+    sel.onchange = calc;
+    oddsInput.oninput = function(){ gameData.lastOdds = parseFloat(this.value||'0.95')||0.95; saveData(); calc(); };
+  }
+
+  function renderSeries(){
+    const wrap = document.getElementById('seriesList'); if(!wrap) return; wrap.innerHTML='';
+    const list = gameData.series.slice().sort((a,b)=> a.id - b.id); // old -> new
+    list.forEach(s=>{
+      const div = document.createElement('div'); div.className='card series';
+      const pc = s.totalProfit>0? 'pill pos': (s.totalProfit<0? 'pill neg':'pill zero');
+      // header
+      div.innerHTML = `
+        <div class="head">
+          <div class="title">${s.name}</div>
+          <div class="${pc}">${s.totalProfit>0?'+':''}${s.totalProfit.toLocaleString()} ฿</div>
+        </div>
+      `;
+
+      // actions on top
+      const actionsTop = document.createElement('div'); actionsTop.className = 'actions-top';
+      const left = document.createElement('div'); left.className = 'actions-left';
+      const right = document.createElement('div'); right.className = 'actions-right';
+
+      if(s.currentBetting){
+        const btnW = document.createElement('button'); btnW.className = 'btn ok'; btnW.textContent = '✅ Win'; btnW.onclick = function(){ recordResult(s.id, true); };
+        const btnL = document.createElement('button'); btnL.className = 'btn bad'; btnL.textContent = '❌ Lose'; btnL.onclick = function(){ recordResult(s.id, false); };
+        left.appendChild(btnW); left.appendChild(btnL);
+      }
+      const btnC = document.createElement('button'); btnC.className = 'btn sm gray'; btnC.textContent = 'Close'; btnC.onclick = function(){ completeSeries(s.id); };
+      const btnD = document.createElement('button'); btnD.className = 'btn sm bad'; btnD.style.filter = 'none'; btnD.textContent = 'Delete'; btnD.onclick = function(){ deleteSeries(s.id); };
+      right.appendChild(btnC); right.appendChild(btnD);
+
+      actionsTop.appendChild(left); actionsTop.appendChild(right); div.appendChild(actionsTop);
+
+      // rows container
+      const rows = document.createElement('div'); rows.id = `rows-${s.id}`; rows.className = 'rows';
+      div.appendChild(rows);
+      wrap.appendChild(div);
+
+      // current betting row — first
+      let rowCount = 0;
+      if(s.currentBetting){
+        const b = s.currentBetting; const mnShort = truncTitle(b.matchName);
+        const d = document.createElement('details'); d.className='row';
+        d.innerHTML = `
+          <summary>
+            <span class="badge-mini wait">Betting</span>
+            <span class="col-match truncate" title="${mnShort}">${mnShort}</span>
+            <span class="col-odds">${b.odds}</span>
+            <span class="col-stake"><b>${b.betAmount.toLocaleString()}฿</b></span>
+            <span class="col-fib">(${b.fibIndex})</span>
+          </summary>
+          <div class="row-detail">${b.matchName}</div>
+        `;
+        rows.appendChild(d); rowCount++;
+      }
+
+      // finished games — newest first
+      const games = s.games.slice().reverse();
+      games.forEach(function(g){
+        const mnShort = truncTitle(g.matchName);
+        const d = document.createElement('details'); d.className='row';
+        d.innerHTML = `
+          <summary>
+            <span class="badge-mini ${g.result==='Win'?'win':'lose'}">${g.result}</span>
+            <span class="col-match truncate" title="${mnShort}">${mnShort}</span>
+            <span class="col-odds">${g.odds}</span>
+            <span class="col-stake"><b>${g.betAmount.toLocaleString()}฿</b></span>
+            <span class="col-fib">(${g.fibIndex})</span>
+          </summary>
+          <div class="row-detail">${g.matchName}</div>
+        `;
+        rows.appendChild(d); rowCount++;
+      });
+
+      if(rowCount > 10){ rows.classList.add('scroll'); }
     });
+  }
 
-    // Random popup helpers
-    function randOf(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
-    function rollAll(){
-      const picks = {
-        sides: randOf(['Home','Away']),
-        ou: randOf(['Over','Under']),
-        oe: randOf(['Odd','Even'])
-      };
-      const el = document.getElementById('randomResults');
-      if(el){
-        el.innerHTML = `<ul class="rand-list">
-          <li><b>Home/Away:</b> ${picks.sides}</li>
-          <li><b>Over/Under:</b> ${picks.ou}</li>
-          <li><b>Odd/Even:</b> ${picks.oe}</li>
-        </ul>`;
-      }
-    }
-    function openRandom(){
-      let m = document.getElementById('randomModal');
-      if(!m){
-        const div = document.createElement('div');
-        div.id = 'randomModal';
-        div.className = 'modal hidden';
-        div.setAttribute('role','dialog');
-        div.setAttribute('aria-modal','true');
-        div.setAttribute('aria-labelledby','randTitle');
-        div.innerHTML = `
-          <div class="modal-card">
-            <div class="modal-head">
-              <h3 id="randTitle">🎲 Random Picks</h3>
-              <button class="close" aria-label="Close" onclick="closeRandom()">×</button>
-            </div>
-            <div class="modal-body" id="randomResults"></div>
-            <div class="controls-row" style="padding:12px 16px;">
-              <button class="btn" onclick="doRandom()">🔀 Re-roll</button>
-              <button class="btn gray" onclick="closeRandom()">Close</button>
-            </div>
-          </div>`;
-        document.body.appendChild(div);
-        m = div;
-      }
-      m.classList.remove('hidden');
-      rollAll();
-    }
-    function closeRandom(){ const m = document.getElementById('randomModal'); if(!m) return; m.classList.add('hidden'); }
-    function doRandom(){ rollAll(); }
+  function renderTotals(){
+    const total = gameData.series.reduce((a,s)=> a + s.totalProfit, 0);
+    const el = document.getElementById('totalProfit'); if(!el) return;
+    el.textContent = (total>0?'+':'') + total.toLocaleString();
+    el.className = 'total ' + (total>0? 'pos' : (total<0? 'neg':'zero'));
+  }
 
-    // Ensure inline handlers available
-    window.createNewSeries = createNewSeries;
-    window.resetAll = resetAll;
-    window.startBetting = startBetting;
-    window.recordResult = recordResult;
-    window.completeSeries = completeSeries;
-    window.deleteSeries = deleteSeries;
-    window.openRandom = openRandom;
-    window.closeRandom = closeRandom;
-    window.doRandom = doRandom;
-  </script>
+  // ====== Random popup helpers ======
+  function randOf(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function rollAll(){
+    const picks = { sides: randOf(['Home','Away']), ou: randOf(['Over','Under']), oe: randOf(['Odd','Even']) };
+    const el = document.getElementById('randomResults');
+    if(el){ el.innerHTML = `<ul class="rand-list"><li><b>Home/Away:</b> ${picks.sides}</li><li><b>Over/Under:</b> ${picks.ou}</li><li><b>Odd/Even:</b> ${picks.oe}</li></ul>`; }
+  }
+  function openRandom(){
+    let m = document.getElementById('randomModal');
+    if(!m){
+      const div = document.createElement('div');
+      div.id = 'randomModal';
+      div.className = 'modal hidden';
+      div.setAttribute('role','dialog');
+      div.setAttribute('aria-modal','true');
+      div.setAttribute('aria-labelledby','randTitle');
+      div.innerHTML = `
+        <div class="modal-card">
+          <div class="modal-head">
+            <h3 id="randTitle">🎲 Random Picks</h3>
+            <button class="close" aria-label="Close" onclick="closeRandom()">×</button>
+          </div>
+          <div class="modal-body" id="randomResults"></div>
+          <div class="controls-row" style="padding:12px 16px;">
+            <button class="btn" onclick="doRandom()">🔀 Re-roll</button>
+            <button class="btn gray" onclick="closeRandom()">Close</button>
+          </div>
+        </div>`;
+      document.body.appendChild(div); m = div;
+    }
+    m.classList.remove('hidden'); rollAll();
+  }
+  function closeRandom(){ const m = document.getElementById('randomModal'); if(!m) return; m.classList.add('hidden'); }
+  function doRandom(){ rollAll(); }
+
+  // ====== Init ======
+  document.addEventListener('DOMContentLoaded', function(){
+    loadData();
+    const mb = document.getElementById('minBet');
+    if(mb){ mb.addEventListener('change', function(){ gameData.minBet = Math.max(1, parseInt(this.value||'25')); updateDisplay(); saveData(); }); }
+  });
+
+  // Expose for inline handlers
+  window.createNewSeries = createNewSeries;
+  window.resetAll = resetAll;
+  window.startBetting = startBetting;
+  window.recordResult = recordResult;
+  window.completeSeries = completeSeries;
+  window.deleteSeries = deleteSeries;
+  window.openRandom = openRandom;
+  window.closeRandom = closeRandom;
+  window.doRandom = doRandom;
+</script>
 </body>
 </html>
