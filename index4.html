@@ -1,0 +1,794 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>...</title>
+    <style>
+        /* Global Styles */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            margin: 0;
+            padding: 0;
+            background-color: #f5f5f5;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        /* Navigation */
+        .tabs {
+            display: flex;
+            background-color: #fff;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .tab {
+            flex: 1;
+            text-align: center;
+            padding: 15px;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab.active {
+            border-bottom-color: #007AFF;
+            color: #007AFF;
+            font-weight: bold;
+        }
+        
+        /* Common Components */
+        .card {
+            background-color: #fff;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 16px;
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        
+        .button {
+            background-color: #007AFF;
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 8px;
+            font-size: 16px;
+            cursor: pointer;
+            text-align: center;
+            margin: 8px 0;
+            display: inline-block;
+        }
+        
+        .button.win {
+            background-color: #2ECC71;
+        }
+        
+        .button.lose {
+            background-color: #E74C3C;
+        }
+        
+        .button.delete {
+            background-color: #E74C3C;
+        }
+        
+        .button.secondary {
+            background-color: #5f5f5f;
+        }
+        
+        .button-row {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 16px;
+        }
+        
+        .loading {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100px;
+        }
+        
+        .centered {
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 200px;
+            color: #555;
+        }
+        
+        /* Betting Lines List */
+        .line-item {
+            margin-bottom: 12px;
+        }
+        
+        .line-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .line-balance {
+            font-size: 18px;
+            font-weight: bold;
+            margin-bottom: 8px;
+        }
+        
+        .line-recoup {
+            color: #E74C3C;
+        }
+        
+        .line-footer {
+            display: flex;
+            justify-content: space-between;
+            color: #777;
+            font-size: 14px;
+        }
+        
+        /* Betting Line Actions */
+        .detail-row {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        
+        .detail-label {
+            color: #555;
+        }
+        
+        .detail-value {
+            font-weight: bold;
+        }
+        
+        .section-title {
+            font-size: 18px;
+            font-weight: bold;
+            margin: 16px 0 8px;
+        }
+        
+        .input {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            margin-bottom: 12px;
+            font-size: 16px;
+            box-sizing: border-box;
+        }
+        
+        /* Bet History */
+        .history-item {
+            display: flex;
+            margin-bottom: 12px;
+        }
+        
+        .status-indicator {
+            width: 6px;
+            height: 60px;
+            border-radius: 3px;
+            margin-right: 12px;
+        }
+        
+        .win-indicator {
+            background-color: #2ECC71;
+        }
+        
+        .lose-indicator {
+            background-color: #E74C3C;
+        }
+        
+        .history-content {
+            flex: 1;
+        }
+        
+        .history-header {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 6px;
+        }
+        
+        .result-text {
+            font-weight: bold;
+        }
+        
+        .win-text {
+            color: #2ECC71;
+        }
+        
+        .lose-text {
+            color: #E74C3C;
+        }
+    </style>
+</head>
+<body>
+    <div id="app" class="container">
+        <div class="tabs">
+            <div class="tab active" data-tab="lines">Betting Lines</div>
+            <div class="tab" data-tab="actions">Line Actions</div>
+            <div class="tab" data-tab="history">Bet History</div>
+        </div>
+        
+        <!-- Betting Lines List Screen -->
+        <div id="lines-screen" class="screen">
+            <div class="button-row">
+                <button id="create-line-btn" class="button">➕ Create New Line</button>
+                <button id="random-number-btn" class="button secondary">🎲 Random Number</button>
+            </div>
+            
+            <div id="lines-list"></div>
+        </div>
+        
+        <!-- Betting Line Actions Screen -->
+        <div id="actions-screen" class="screen" style="display: none;">
+            <div id="line-details-card" class="card">
+                <div class="detail-row">
+                    <span class="detail-label">Line ID:</span>
+                    <span class="detail-value" id="line-id"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Current Step:</span>
+                    <span class="detail-value" id="current-step"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Total Balance:</span>
+                    <span class="detail-value" id="total-balance"></span>
+                </div>
+                <div class="detail-row" id="recoup-row" style="display: none;">
+                    <span class="detail-label">Amount to Recoup:</span>
+                    <span class="detail-value line-recoup" id="lose-balance"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Win Streak:</span>
+                    <span class="detail-value" id="win-streak"></span>
+                </div>
+                <div class="detail-row">
+                    <span class="detail-label">Last Updated:</span>
+                    <span class="detail-value" id="update-at"></span>
+                </div>
+            </div>
+            
+            <div class="section-title">Description</div>
+            <textarea id="line-description" class="input" rows="3" placeholder="Line Description"></textarea>
+            <button id="save-description-btn" class="button">Save Description</button>
+            
+            <div class="section-title">Record Bet</div>
+            <div class="button-row">
+                <button id="win-bet-btn" class="button win">WIN</button>
+                <button id="lose-bet-btn" class="button lose">LOSE</button>
+            </div>
+            
+            <div class="section-title">History</div>
+            <button id="view-history-btn" class="button">View Bet History</button>
+            
+            <div class="section-title">Manage Line</div>
+            <button id="delete-line-btn" class="button delete">Delete Line</button>
+        </div>
+        
+        <!-- Bet History Screen -->
+        <div id="history-screen" class="screen" style="display: none;">
+            <div id="history-list"></div>
+        </div>
+    </div>
+
+    <script>
+        // Database Simulation (using localStorage)
+        const Database = {
+            init() {
+                if (!localStorage.getItem('betting_system')) {
+                    localStorage.setItem('betting_system', JSON.stringify({
+                        betting_lines: [],
+                        bet_history: []
+                    }));
+                }
+                return Promise.resolve();
+            },
+            
+            getDb() {
+                return JSON.parse(localStorage.getItem('betting_system'));
+            },
+            
+            saveDb(db) {
+                localStorage.setItem('betting_system', JSON.stringify(db));
+                return Promise.resolve();
+            },
+            
+            addBettingLine(current_step, total_balance, lose_balance, win_streak, desc, update_at) {
+                const db = this.getDb();
+                const newLine = {
+                    id: db.betting_lines.length > 0 ? Math.max(...db.betting_lines.map(l => l.id)) + 1 : 1,
+                    current_step,
+                    total_balance,
+                    lose_balance,
+                    win_streak,
+                    desc,
+                    update_at
+                };
+                db.betting_lines.push(newLine);
+                return this.saveDb(db).then(() => newLine.id);
+            },
+            
+            getBettingLines() {
+                const db = this.getDb();
+                return Promise.resolve(db.betting_lines.slice().reverse());
+            },
+            
+            getBettingLineById(id) {
+                const db = this.getDb();
+                const line = db.betting_lines.find(l => l.id === id);
+                return Promise.resolve(line ? {...line} : null);
+            },
+            
+            updateBettingLine(id, { current_step, total_balance, lose_balance, win_streak, desc, update_at }) {
+                const db = this.getDb();
+                const index = db.betting_lines.findIndex(l => l.id === id);
+                if (index >= 0) {
+                    db.betting_lines[index] = {
+                        ...db.betting_lines[index],
+                        current_step,
+                        total_balance,
+                        lose_balance,
+                        win_streak,
+                        desc,
+                        update_at
+                    };
+                    return this.saveDb(db).then(() => 1);
+                }
+                return Promise.resolve(0);
+            },
+            
+            deleteBettingLine(id) {
+                const db = this.getDb();
+                const initialLength = db.betting_lines.length;
+                db.betting_lines = db.betting_lines.filter(l => l.id !== id);
+                db.bet_history = db.bet_history.filter(h => h.betting_line_id !== id);
+                return this.saveDb(db).then(() => initialLength - db.betting_lines.length);
+            },
+            
+            addBetHistory(betting_line_id, result, bet_amount, desc, create_at) {
+                const db = this.getDb();
+                const newHistory = {
+                    id: db.bet_history.length > 0 ? Math.max(...db.bet_history.map(h => h.id)) + 1 : 1,
+                    betting_line_id,
+                    result,
+                    bet_amount,
+                    desc,
+                    create_at
+                };
+                db.bet_history.push(newHistory);
+                return this.saveDb(db).then(() => newHistory.id);
+            },
+            
+            getBetHistory(bettingLineId) {
+                const db = this.getDb();
+                const history = db.bet_history
+                    .filter(h => h.betting_line_id === bettingLineId)
+                    .sort((a, b) => b.create_at - a.create_at)
+                    .slice(0, 30);
+                return Promise.resolve(history);
+            }
+        };
+
+        // Betting Service
+        const BettingService = {
+            async createNewBettingLine() {
+                const now = Date.now();
+                const initialValues = {
+                    current_step: 0,
+                    total_balance: 0,
+                    lose_balance: 0,
+                    win_streak: 0,
+                    desc: '',
+                    update_at: now,
+                };
+                try {
+                    const insertId = await Database.addBettingLine(
+                        initialValues.current_step,
+                        initialValues.total_balance,
+                        initialValues.lose_balance,
+                        initialValues.win_streak,
+                        initialValues.desc,
+                        initialValues.update_at
+                    );
+                    console.log('Betting line created with ID:', insertId);
+                    return { id: insertId, ...initialValues };
+                } catch (error) {
+                    console.error('Error creating new betting line:', error);
+                    throw error;
+                }
+            },
+
+            async recordBetResult(bettingLineId, resultType, betAmount, historyDesc = '') {
+                if (betAmount <= 0) {
+                    throw new Error("Bet amount must be positive.");
+                }
+
+                const currentLine = await Database.getBettingLineById(bettingLineId);
+
+                if (!currentLine) {
+                    throw new Error(`Betting line with ID ${bettingLineId} not found.`);
+                }
+
+                let { current_step, total_balance, lose_balance, win_streak } = currentLine;
+                let new_step, new_balance, new_lose_balance, new_win_streak;
+
+                if (resultType === 'win') {
+                    new_balance = total_balance + betAmount;
+                    new_lose_balance = lose_balance + betAmount;
+                    new_win_streak = win_streak + 1;
+
+                    if (new_lose_balance > 0) {
+                        new_lose_balance = 0;
+                    }
+
+                    new_step = new_win_streak >= 2 ? 0 : Math.max(0, current_step - 1);
+                } else if (resultType === 'lose') {
+                    new_balance = total_balance - betAmount;
+                    new_lose_balance = lose_balance - betAmount;
+                    new_win_streak = 0;
+                    new_step = current_step + 1;
+                } else {
+                    throw new Error("Invalid result type. Must be 'win' or 'lose'.");
+                }
+
+                const now = Date.now();
+                try {
+                    await Database.updateBettingLine(bettingLineId, {
+                        current_step: new_step,
+                        total_balance: new_balance,
+                        lose_balance: new_lose_balance,
+                        win_streak: new_win_streak,
+                        desc: currentLine.desc,
+                        update_at: now,
+                    });
+
+                    await Database.addBetHistory(bettingLineId, resultType, betAmount, historyDesc, now);
+
+                    console.log(`Bet result recorded for line ${bettingLineId}. New balance: ${new_balance}`);
+                    return {};
+                } catch (error) {
+                    console.error('Error recording bet result:', error);
+                    throw error;
+                }
+            },
+
+            async updateBettingLineDescription(bettingLineId, newDescription) {
+                const currentLine = await Database.getBettingLineById(bettingLineId);
+
+                if (!currentLine) {
+                    throw new Error(`Betting line with ID ${bettingLineId} not found for description update.`);
+                }
+
+                const now = Date.now();
+                try {
+                    await Database.updateBettingLine(bettingLineId, {
+                        ...currentLine,
+                        desc: newDescription,
+                        update_at: now,
+                    });
+                    console.log(`Description updated for betting line ${bettingLineId}`);
+                    return { ...currentLine, desc: newDescription, update_at: now };
+                } catch (error) {
+                    console.error('Error updating betting line description:', error);
+                    throw error;
+                }
+            },
+
+            async deleteBettingLine(bettingLineId) {
+                try {
+                    const rowsAffected = await Database.deleteBettingLine(bettingLineId);
+                    if (rowsAffected > 0) {
+                        console.log(`Betting line ${bettingLineId} and its history deleted.`);
+                    } else {
+                        console.log(`Betting line ${bettingLineId} not found or already deleted.`);
+                    }
+                    return rowsAffected;
+                } catch (error) {
+                    console.error('Error deleting betting line:', error);
+                    throw error;
+                }
+            },
+
+            async getAllBettingLines() {
+                try {
+                    return await Database.getBettingLines();
+                } catch (error) {
+                    console.error('Error fetching all betting lines:', error);
+                    throw error;
+                }
+            },
+
+            async getHistoryForBettingLine(bettingLineId) {
+                try {
+                    return await Database.getBetHistory(bettingLineId);
+                } catch (error) {
+                    console.error(`Error fetching history for betting line ${bettingLineId}:`, error);
+                    throw error;
+                }
+            }
+        };
+
+        // App State
+        const AppState = {
+            currentScreen: 'lines',
+            currentLineId: null,
+            isLoading: false,
+            
+            init() {
+                Database.init().then(() => {
+                    this.setupEventListeners();
+                    this.showScreen('lines');
+                });
+            },
+            
+            setupEventListeners() {
+                // Tab navigation
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.addEventListener('click', () => {
+                        this.showScreen(tab.dataset.tab);
+                    });
+                });
+                
+                // Lines screen
+                document.getElementById('create-line-btn').addEventListener('click', () => this.createNewLine());
+                document.getElementById('random-number-btn').addEventListener('click', () => this.showRandomNumber());
+                
+                // Actions screen
+                document.getElementById('save-description-btn').addEventListener('click', () => this.saveDescription());
+                document.getElementById('win-bet-btn').addEventListener('click', () => this.recordBet('win'));
+                document.getElementById('lose-bet-btn').addEventListener('click', () => this.recordBet('lose'));
+                document.getElementById('view-history-btn').addEventListener('click', () => this.viewHistory());
+                document.getElementById('delete-line-btn').addEventListener('click', () => this.deleteLine());
+            },
+            
+            showScreen(screenName) {
+                this.currentScreen = screenName;
+                
+                // Hide all screens
+                document.querySelectorAll('.screen').forEach(screen => {
+                    screen.style.display = 'none';
+                });
+                
+                // Deactivate all tabs
+                document.querySelectorAll('.tab').forEach(tab => {
+                    tab.classList.remove('active');
+                });
+                
+                // Show selected screen
+                document.getElementById(`${screenName}-screen`).style.display = 'block';
+                
+                // Activate selected tab
+                document.querySelector(`.tab[data-tab="${screenName}"]`).classList.add('active');
+                
+                // Load data for screen
+                if (screenName === 'lines') {
+                    this.loadLines();
+                } else if (screenName === 'history' && this.currentLineId) {
+                    this.loadHistory();
+                }
+            },
+            
+            async loadLines() {
+                this.isLoading = true;
+                const linesList = document.getElementById('lines-list');
+                linesList.innerHTML = '<div class="loading">Loading...</div>';
+                
+                try {
+                    const lines = await BettingService.getAllBettingLines();
+                    
+                    if (lines.length === 0) {
+                        linesList.innerHTML = '<div class="centered">No betting lines found. Create one!</div>';
+                        return;
+                    }
+                    
+                    linesList.innerHTML = '';
+                    lines.forEach(line => {
+                        const lineItem = document.createElement('div');
+                        lineItem.className = 'card line-item';
+                        lineItem.innerHTML = `
+                            <div class="line-header">
+                                <span>ID: ${line.id}</span>
+                                <span>Step: ${line.current_step}</span>
+                            </div>
+                            <div class="line-balance">
+                                Balance: ${line.total_balance}
+                                ${line.lose_balance < 0 ? `<span class="line-recoup"> (To Recoup: ${Math.abs(line.lose_balance)})</span>` : ''}
+                            </div>
+                            <div>Desc: ${line.desc || "No description"}</div>
+                            <div class="line-footer">
+                                <span>Streak: ${line.win_streak}</span>
+                                <span>Updated: ${new Date(line.update_at).toLocaleDateString()}</span>
+                            </div>
+                        `;
+                        lineItem.addEventListener('click', () => this.showLineActions(line));
+                        linesList.appendChild(lineItem);
+                    });
+                } catch (error) {
+                    linesList.innerHTML = '<div class="centered">Error loading lines</div>';
+                    console.error('Error loading lines:', error);
+                } finally {
+                    this.isLoading = false;
+                }
+            },
+            
+            showLineActions(line) {
+                this.currentLineId = line.id;
+                
+                // Update the actions screen with line details
+                document.getElementById('line-id').textContent = line.id;
+                document.getElementById('current-step').textContent = line.current_step;
+                document.getElementById('total-balance').textContent = line.total_balance;
+                document.getElementById('win-streak').textContent = line.win_streak;
+                document.getElementById('update-at').textContent = new Date(line.update_at).toLocaleString();
+                document.getElementById('line-description').value = line.desc || '';
+                
+                // Show/hide recoup amount
+                const recoupRow = document.getElementById('recoup-row');
+                if (line.lose_balance < 0) {
+                    recoupRow.style.display = 'flex';
+                    document.getElementById('lose-balance').textContent = Math.abs(line.lose_balance);
+                } else {
+                    recoupRow.style.display = 'none';
+                }
+                
+                this.showScreen('actions');
+            },
+            
+            async createNewLine() {
+                if (this.isLoading) return;
+                
+                try {
+                    this.isLoading = true;
+                    await BettingService.createNewBettingLine();
+                    await this.loadLines();
+                } catch (error) {
+                    alert('Error creating new line');
+                    console.error('Error creating line:', error);
+                } finally {
+                    this.isLoading = false;
+                }
+            },
+            
+            showRandomNumber() {
+                const randomNumber = Math.floor(Math.random() * 100);
+                alert(`Your random number is: ${randomNumber}`);
+            },
+            
+            async saveDescription() {
+                if (this.isLoading || !this.currentLineId) return;
+                
+                const newDescription = document.getElementById('line-description').value;
+                
+                try {
+                    this.isLoading = true;
+                    await BettingService.updateBettingLineDescription(this.currentLineId, newDescription);
+                    alert('Description updated successfully');
+                    await this.loadLines(); // Refresh the list if we go back
+                } catch (error) {
+                    alert('Error updating description');
+                    console.error('Error updating description:', error);
+                } finally {
+                    this.isLoading = false;
+                }
+            },
+            
+            async recordBet(resultType) {
+    if (this.isLoading || !this.currentLineId) return;
+    
+    const betAmount = prompt(`Enter bet amount for ${resultType}:`);
+    if (!betAmount || isNaN(betAmount)) {
+        alert('Please enter a valid number for the bet amount');
+        return;
+    }
+    
+    try {
+        this.isLoading = true;
+        
+        
+
+        // line-description
+
+        await BettingService.updateBettingLineDescription(this.currentLineId, "");
+
+        
+        
+        // Refresh the line details
+        const updatedLine = await Database.getBettingLineById(this.currentLineId);
+        if (updatedLine) {
+            const description = document.getElementById('line-description').value;
+            document.getElementById('line-description').value = "";
+            await BettingService.recordBetResult(
+                this.currentLineId, 
+                resultType, 
+                parseInt(betAmount), 
+                description
+            );
+            // this.showLineActions(updatedLine);
+            alert(`Bet recorded as ${resultType}`);
+            this.showScreen('lines');
+        }
+    } catch (error) {
+        alert(`Error recording ${resultType} bet`);
+        console.error(`Error recording ${resultType} bet:`, error);
+    } finally {
+        this.isLoading = false;
+    }
+},
+            
+            viewHistory() {
+                if (!this.currentLineId) return;
+                this.showScreen('history');
+            },
+            
+            async loadHistory() {
+                if (!this.currentLineId) return;
+                
+                this.isLoading = true;
+                const historyList = document.getElementById('history-list');
+                historyList.innerHTML = '<div class="loading">Loading history...</div>';
+                
+                try {
+                    const history = await BettingService.getHistoryForBettingLine(this.currentLineId);
+                    
+                    if (history.length === 0) {
+                        historyList.innerHTML = '<div class="centered">No history found for this line</div>';
+                        return;
+                    }
+                    
+                    historyList.innerHTML = '';
+                    history.forEach(item => {
+                        const isWin = item.result === 'win';
+                        const historyItem = document.createElement('div');
+                        historyItem.className = 'card history-item';
+                        historyItem.innerHTML = `
+                            <div class="status-indicator ${isWin ? 'win-indicator' : 'lose-indicator'}"></div>
+                            <div class="history-content">
+                                <div class="history-header">
+                                    <span class="result-text ${isWin ? 'win-text' : 'lose-text'}">${item.result.toUpperCase()}</span>
+                                    <span>Amount: ${item.bet_amount}</span>
+                                </div>
+                                <div>Desc: ${item.desc || "N/A"}</div>
+                                <div>Date: ${new Date(item.create_at).toLocaleString()}</div>
+                            </div>
+                        `;
+                        historyList.appendChild(historyItem);
+                    });
+                } catch (error) {
+                    historyList.innerHTML = '<div class="centered">Error loading history</div>';
+                    console.error('Error loading history:', error);
+                } finally {
+                    this.isLoading = false;
+                }
+            },
+            
+            async deleteLine() {
+                if (this.isLoading || !this.currentLineId) return;
+                
+                if (!confirm('Are you sure you want to delete this betting line and all its history?')) {
+                    return;
+                }
+                
+                try {
+                    this.isLoading = true;
+                    await BettingService.deleteBettingLine(this.currentLineId);
+                    alert('Betting line deleted successfully');
+                    this.currentLineId = null;
+                    this.showScreen('lines');
+                } catch (error) {
+                    alert('Error deleting line');
+                    console.error('Error deleting line:', error);
+                } finally {
+                    this.isLoading = false;
+                }
+            }
+        };
+
+        // Initialize the app
+        document.addEventListener('DOMContentLoaded', () => {
+            AppState.init();
+        });
+    </script>
+</body>
+</html>
