@@ -74,6 +74,16 @@
     .fib{ display:flex; flex-wrap:wrap; gap:8px; }
     .chip{ display:inline-block; background:#ecf2ff; border:1px solid #e1e5e9; border-radius:8px; padding:6px 10px; font-weight:700; position:relative; }
     .chip .i{ position:absolute; top:-6px; right:-6px; width:16px; height:16px; border-radius:50%; background:#333; color:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; }
+      /* Modal for random picks */
+    .modal{ position:fixed; inset:0; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; padding:16px; z-index:50; }
+    .modal.hidden{ display:none; }
+    .modal-card{ background:#fff; width:min(520px,92vw); border-radius:14px; box-shadow:0 10px 24px rgba(0,0,0,.2); overflow:hidden; }
+    .modal-head{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid #eef1f4; }
+    .modal-head h3{ margin:0; font-size:1.05rem; }
+    .modal-body{ padding:16px; }
+    .rand-list{ margin:0; padding-left:18px; line-height:1.8; font-size:1rem; }
+    .close{ background:transparent; border:0; font-size:22px; cursor:pointer; }
+    .btn-row{ display:flex; gap:10px; flex-wrap:wrap; }
   </style>
 </head>
 <body>
@@ -87,9 +97,9 @@
       <!-- LEFT: Overall + Next Bet + Series list -->
       <section>
         <div class="stats">
-          <h3>📈 Overall</h3>
+          <!-- <h3>📈 Overall</h3> -->
           <div class="total" id="totalProfit">0</div>
-          <div>THB</div>
+          <!-- <div>THB</div> -->
         </div>
 
         <!-- Next Bet directly under Overall -->
@@ -116,7 +126,10 @@
             </div>
           </div>
 
-          <button class="btn" id="bettingBtn" onclick="startBetting()">🎯 Place Bet</button>
+          <div class="btn-row">
+            <button class="btn" id="bettingBtn" onclick="startBetting()">🎯 Submit</button>
+            <button class="btn gray" id="randomBtn" onclick="openRandom()">🎲 Random</button>
+          </div>
         </div>
 
         <!-- Series list -->
@@ -142,7 +155,7 @@
         <div class="fib" id="fibSequence"></div>
       </div>
       <div class="controls-row">
-        <button class="btn" onclick="createNewSeries()">📝 Start New Series</button>
+        <button class="btn" onclick="createNewSeries()">📝 New Series</button>
         <button class="btn gray" onclick="resetAll()">🗑️ Reset All</button>
       </div>
     </section>
@@ -151,7 +164,7 @@
   <script>
     // ====== State ======
     let gameData = {
-      minBet: 10,
+      minBet: 25,
       lastOdds: 0.95,
       fibSequence: [1,1,2,3,5,8,13,21,34,55,89,144],
       series: []
@@ -199,7 +212,7 @@
     }
     function resetAll(){
       if(!confirm('Reset all data?')) return;
-      gameData = { minBet:10, lastOdds:0.95, fibSequence:[1,1,2,3,5,8,13,21,34,55,89,144], series:[] };
+      gameData = { minBet:25, lastOdds:0.95, fibSequence:[1,1,2,3,5,8,13,21,34,55,89,144], series:[] };
       updateDisplay(); saveData();
     }
 
@@ -374,6 +387,53 @@
       if(mb){ mb.addEventListener('change', function(){ gameData.minBet = Math.max(1, parseInt(this.value||'10')); updateDisplay(); saveData(); }); }
     });
 
+    // Random popup helpers
+    function randOf(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+    function rollAll(){
+      const picks = {
+        sides: randOf(['Home','Away']),
+        ou: randOf(['Over','Under']),
+        oe: randOf(['Odd','Even'])
+      };
+      const el = document.getElementById('randomResults');
+      if(el){
+        el.innerHTML = `<ul class="rand-list">
+          <li><b>Home/Away:</b> ${picks.sides}</li>
+          <li><b>Over/Under:</b> ${picks.ou}</li>
+          <li><b>Odd/Even:</b> ${picks.oe}</li>
+        </ul>`;
+      }
+    }
+    function openRandom(){
+      let m = document.getElementById('randomModal');
+      if(!m){
+        const div = document.createElement('div');
+        div.id = 'randomModal';
+        div.className = 'modal hidden';
+        div.setAttribute('role','dialog');
+        div.setAttribute('aria-modal','true');
+        div.setAttribute('aria-labelledby','randTitle');
+        div.innerHTML = `
+          <div class="modal-card">
+            <div class="modal-head">
+              <h3 id="randTitle">🎲 Random Picks</h3>
+              <button class="close" aria-label="Close" onclick="closeRandom()">×</button>
+            </div>
+            <div class="modal-body" id="randomResults"></div>
+            <div class="controls-row" style="padding:12px 16px;">
+              <button class="btn" onclick="doRandom()">🔀 Re-roll</button>
+              <button class="btn gray" onclick="closeRandom()">Close</button>
+            </div>
+          </div>`;
+        document.body.appendChild(div);
+        m = div;
+      }
+      m.classList.remove('hidden');
+      rollAll();
+    }
+    function closeRandom(){ const m = document.getElementById('randomModal'); if(!m) return; m.classList.add('hidden'); }
+    function doRandom(){ rollAll(); }
+
     // Ensure inline handlers available
     window.createNewSeries = createNewSeries;
     window.resetAll = resetAll;
@@ -381,6 +441,9 @@
     window.recordResult = recordResult;
     window.completeSeries = completeSeries;
     window.deleteSeries = deleteSeries;
+    window.openRandom = openRandom;
+    window.closeRandom = closeRandom;
+    window.doRandom = doRandom;
   </script>
 </body>
 </html>
