@@ -3,101 +3,59 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>ตารางทุนที่ต้องใช้และความเสี่ยง</title>
+  <title>ตารางทุนที่ต้องใช้และความเสี่ยง — Fibonacci × (เริ่มต้น ÷ ค่าน้ำ)</title>
   <style>
     :root{
-      --bg:#0b1020;
-      --card:#0f1630;
-      --muted:#a9b3c7;
-      --text:#e8eefc;
-      --accent:#6aa4ff;
-      --accent-2:#8ee2b6;
-      --danger:#ff7b7b;
-      --ring:rgba(106,164,255,.35);
-      --shadow:0 10px 30px rgba(0,0,0,.35);
-      --radius:16px;
+      --bg:#0b1020; --card:#0f1630; --muted:#a9b3c7; --text:#e8eefc;
+      --accent:#6aa4ff; --shadow:0 10px 30px rgba(0,0,0,.35); --radius:16px;
     }
-    *{box-sizing:border-box}
-    html,body{height:100%}
-    body{
-      margin:0; background:linear-gradient(180deg,#0b1020 0%,#0b1426 40%,#0b152a 100%);
-      color:var(--text); font: 16px/1.55 ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
-    }
-    .container{max-width:1100px; margin:24px auto; padding:0 16px}
-    .card{
-      background:var(--card); border:1px solid rgba(255,255,255,.06);
-      border-radius:var(--radius); box-shadow:var(--shadow);
-    }
-    header{
-      display:flex; gap:16px; align-items:center; justify-content:space-between;
-      padding:18px 20px; border-bottom:1px solid rgba(255,255,255,.06)
-    }
-    header h1{font-size:18px; margin:0; font-weight:700}
-    .controls{
-      display:grid; grid-template-columns:repeat(4,1fr); gap:12px; padding:16px; align-items:end
-    }
-    .field{display:flex; flex-direction:column; gap:6px}
-    .field label{font-size:13px; letter-spacing:.2px; color:var(--muted)}
-    .field input{
-      background:#0d132a; color:var(--text); border:1px solid rgba(255,255,255,.08);
-      border-radius:12px; padding:10px 12px; outline:none; transition:box-shadow .2s, border-color .2s
-    }
-    .field input:focus{ box-shadow:0 0 0 6px var(--ring); border-color:var(--accent) }
-    button.primary{
-      background:linear-gradient(180deg, var(--accent) 0%, #4a86f6 100%);
-      color:#0a1020; border:none; border-radius:12px; padding:12px 14px; font-weight:700; cursor:pointer
-    }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;background:linear-gradient(180deg,#0b1020 0%,#0b1426 40%,#0b152a 100%);
+      color:var(--text); font:16px/1.55 ui-sans-serif,system-ui,-apple-system,"Segoe UI",Roboto,Arial}
+    .container{max-width:1100px;margin:24px auto;padding:0 16px}
+    .card{background:var(--card);border:1px solid rgba(255,255,255,.06);border-radius:var(--radius);box-shadow:var(--shadow)}
+    header{display:flex;gap:16px;align-items:center;justify-content:space-between;
+      padding:18px 20px;border-bottom:1px solid rgba(255,255,255,.06)}
+    header h1{font-size:18px;margin:0;font-weight:700}
+    .controls{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;padding:16px;align-items:end}
+    .field{display:flex;flex-direction:column;gap:6px}
+    .field label{font-size:13px;letter-spacing:.2px;color:var(--muted)}
+    .field input{background:#0d132a;color:var(--text);border:1px solid rgba(255,255,255,.08);
+      border-radius:12px;padding:10px 12px;outline:none;transition:box-shadow .2s,border-color .2s}
+    .field input:focus{box-shadow:0 0 0 6px rgba(106,164,255,.35);border-color:var(--accent)}
+    button.primary{background:linear-gradient(180deg,var(--accent) 0%,#4a86f6 100%);
+      color:#0a1020;border:none;border-radius:12px;padding:12px 14px;font-weight:700;cursor:pointer}
     button.primary:hover{filter:brightness(1.05)}
-    .summary{ display:flex; gap:16px; flex-wrap:wrap; padding:0 16px 16px 16px }
-    .pill{
-      background:#0d132a; border:1px solid rgba(255,255,255,.08); border-radius:999px;
-      padding:8px 12px; font-size:13px; color:var(--muted)
-    }
-
-    table{ width:100%; border-collapse:separate; border-spacing:0; }
-    thead th{
-      position:sticky; top:0; z-index:1; background:#121a3a; color:#cdd6eb; font-size:12px; letter-spacing:.3px;
-      text-transform:uppercase; padding:10px 12px; border-bottom:1px solid rgba(255,255,255,.08)
-    }
-    tbody td{ padding:12px; border-bottom:1px dashed rgba(255,255,255,.06) }
-    tbody tr{ transition: background .15s, transform .08s }
-    tbody tr:hover{ background:rgba(255,255,255,.03) }
-    tbody tr.clickable{ cursor:pointer }
-    .right{ text-align:right }
-    .muted{ color:var(--muted) }
-    .tag{ font-size:11px; padding:4px 8px; border-radius:999px; background:#0f1a3a; border:1px solid rgba(255,255,255,.06); color:#cfe0ff }
-    .tag.danger{ background:#2a1116; color:#ffc2c2; border-color:#3d1a21 }
-    .scroll{ max-height:60vh; overflow:auto; border-top:1px solid rgba(255,255,255,.06) }
-
-    /* --- Popup always on top & lock scroll when open --- */
-    .modal-backdrop{
-      position:fixed; inset:0; background:rgba(0,0,0,.55);
-      display:none; align-items:center; justify-content:center; padding:16px;
-      z-index:9999;
-    }
-    .modal{
-      width:min(900px,98vw); background:var(--card); border:1px solid rgba(255,255,255,.08);
-      border-radius:18px; box-shadow:var(--shadow); position:relative; z-index:10000;
-    }
-    .modal header{ border-bottom:1px solid rgba(255,255,255,.08) }
-    .modal .content{ padding:16px }
-    .modal .actions{ display:flex; justify-content:flex-end; padding:0 16px 16px 16px }
-    .btn{ background:#101939; color:#e6eeff; border:1px solid rgba(255,255,255,.1); border-radius:10px; padding:10px 12px; cursor:pointer }
-    .btn:hover{ filter:brightness(1.05) }
-    body.modal-open{ overflow:hidden }
-
-    @media (max-width: 820px){
-      .controls{ grid-template-columns:1fr 1fr; }
-      header{ flex-direction:column; align-items:flex-start }
-    }
+    .summary{display:flex;gap:16px;flex-wrap:wrap;padding:0 16px 16px}
+    .pill{background:#0d132a;border:1px solid rgba(255,255,255,.08);border-radius:999px;padding:8px 12px;font-size:13px;color:var(--muted)}
+    table{width:100%;border-collapse:separate;border-spacing:0}
+    thead th{position:sticky;top:0;z-index:1;background:#121a3a;color:#cdd6eb;font-size:12px;letter-spacing:.3px;
+      text-transform:uppercase;padding:10px 12px;border-bottom:1px solid rgba(255,255,255,.08)}
+    tbody td{padding:12px;border-bottom:1px dashed rgba(255,255,255,.06)}
+    tbody tr{transition:background .15s,transform .08s}
+    tbody tr:hover{background:rgba(255,255,255,.03)}
+    tbody tr.clickable{cursor:pointer}
+    .right{text-align:right} .muted{color:var(--muted)}
+    .tag{font-size:11px;padding:4px 8px;border-radius:999px;background:#0f1a3a;border:1px solid rgba(255,255,255,.06);color:#cfe0ff}
+    .scroll{max-height:60vh;overflow:auto;border-top:1px solid rgba(255,255,255,.06)}
+    /* Popup on top & lock scroll */
+    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9999}
+    .modal{width:min(950px,98vw);background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:18px;box-shadow:var(--shadow);position:relative;z-index:10000}
+    .modal header{border-bottom:1px solid rgba(255,255,255,.08)}
+    .modal .content{padding:16px}
+    .modal .actions{display:flex;justify-content:flex-end;padding:0 16px 16px}
+    .btn{background:#101939;color:#e6eeff;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 12px;cursor:pointer}
+    .btn:hover{filter:brightness(1.05)}
+    body.modal-open{overflow:hidden}
+    @media (max-width:820px){.controls{grid-template-columns:1fr 1fr} header{flex-direction:column;align-items:flex-start}}
   </style>
 </head>
 <body>
   <div class="container">
     <div class="card">
       <header>
-        <h1>ตารางทุนที่ต้องใช้และความเสี่ยง</h1>
-        <span class="tag">สูตรทบคืนทุน + กำไรฐาน</span>
+        <h1>ตารางทุนที่ต้องใช้และความเสี่ยง — Fibonacci × (เริ่มต้น ÷ ค่าน้ำ)</h1>
+        <span class="tag">เดิมพัน/สเต็ป ปัดทศนิยม 1 ตำแหน่ง</span>
       </header>
 
       <div class="controls">
@@ -107,10 +65,10 @@
         </div>
         <div class="field">
           <label for="startBet">เริ่มต้นตาละ (บาท)</label>
-          <input id="startBet" type="number" step="1" min="1" value="25">
+          <input id="startBet" type="number" step="0.1" min="0.1" value="25">
         </div>
         <div class="field">
-          <label for="numSteps">จำนวนตา</label>
+          <label for="numSteps">จำนวนสเต็ป</label>
           <input id="numSteps" type="number" step="1" min="1" value="15">
         </div>
         <div class="field">
@@ -124,19 +82,18 @@
         <table>
           <thead>
             <tr>
-              <th style="width:70px">ตา</th>
-              <th class="right">เดิมพัน/ตา (ปัดขึ้น)</th>
-              <th class="right">คำนวณดิบ</th>
-              <th class="right">ทุนสะสม (ปัดขึ้น)</th>
-              <th class="right">โอกาสแพ้รวด i ตา</th>
+              <th style="width:90px">สเต็ป (Fibo)</th>
+              <th class="right">เดิมพัน/สเต็ป</th>
+              <th class="right">ตัวคูณ Fibo</th>
+              <th class="right">ทุนสะสม</th>
+              <th class="right">โอกาสแพ้รวด i สเต็ป</th>
             </tr>
           </thead>
           <tbody id="tableBody"></tbody>
         </table>
       </div>
       <div style="padding:12px 16px" class="muted">
-        * สร้างสเต็ปจากกำไรขั้นต่ำคงที่ = <span class="tag">ค่าน้ำ × เงินตาแรก</span> และใช้สูตรดิบ
-        <span class="tag">sᵢ(d) = (กำไรฐาน + Σ sⱼ(d)) / ค่าน้ำ</span> (แล้วปัดขึ้นเป็นบาทเต็ม)
+        * เงินเดิมพันสเต็ปที่ <b>i</b> = <b>Fibonacci(i)</b> × (เริ่มต้นตาละ ÷ ค่าน้ำ) โดย <u>ปัดหน่วยฐานเป็นทศนิยม 1 ตำแหน่งก่อน</u> เช่น 25/0.85 → 29.4
       </div>
     </div>
   </div>
@@ -157,38 +114,55 @@
   <script>
     const $ = (sel)=>document.querySelector(sel);
     const fmt0 = n => n.toLocaleString('th-TH', {minimumFractionDigits:0, maximumFractionDigits:0});
-    const fmt2 = n => n.toLocaleString('th-TH', {minimumFractionDigits:2, maximumFractionDigits:2});
+    const fmt1 = n => n.toLocaleString('th-TH', {minimumFractionDigits:1, maximumFractionDigits:1});
     const pct6 = p => (p*100).toLocaleString('th-TH', {minimumFractionDigits:6, maximumFractionDigits:6}) + '%';
+    const round1 = x => Math.round(x*10)/10;
 
-    function generateSchedule(odds, startRaw, num){
+    function fib(n){
+      if(n<=2) return 1;
+      let a=1,b=1; for(let i=3;i<=n;i++){ [a,b] = [b,a+b] } return b;
+    }
+
+    function generateScheduleFibo(odds, startBet, num){
+      const unit = round1(startBet / odds); // ปัด 1 ตำแหน่งตั้งแต่หน่วยฐาน
       const rows = [];
-      let cumRounded = 0;
-      let sumRaw = 0;
-      const baseProfit = odds * startRaw; // กำไรขั้นต่ำคงที่ต่อรอบ
+      let cum = 0;
       for(let i=1;i<=num;i++){
-        const raw = (i===1) ? startRaw : (baseProfit + sumRaw)/odds;
-        const stake = Math.ceil(raw); // ปัดขึ้นเป็นบาทเต็ม
-        sumRaw += raw;
-        cumRounded += stake;
-        rows.push({
-          i, raw, stake, cumRounded,
-          pLoseStreak: Math.pow(0.5, i) // ชนะ=50%
-        });
+        const mult = fib(i);                 // 1,1,2,3,5,8,...
+        const stake = round1(mult * unit);   // ปัด 1 ตำแหน่ง
+        cum = round1(cum + stake);           // ทุนสะสม (ปัด 1 ตำแหน่ง)
+        rows.push({ i, mult, stake, cum, pLoseStreak: Math.pow(0.5, i) });
       }
-      return { rows, baseProfit };
+      return { rows, unit };
     }
 
-    function ensureScheduleLength(odds, startRaw, needLen, current){
+    function ensureScheduleLengthFibo(odds, startBet, needLen, current){
       if(current.rows.length >= needLen) return current;
-      return generateSchedule(odds, startRaw, needLen);
+      return generateScheduleFibo(odds, startBet, needLen);
     }
 
-    // ✅ จำลองลำดับ LWLWLW พร้อมกติกา: แพ้ +1 สเต็ป, ชนะ -1 สเต็ป (ไม่น้อยกว่าตา 1)
-    function simulateAlternatingLWLWLW(startStep, odds, startRaw, baseSchedule){
-      const pattern = ['L','W','L','W','L','W'];
+    // สร้างลำดับตามจำนวน "รอบ": สลับ LW ตามรอบ แล้วเพิ่ม W ปิดท้ายเสมอ
+    function buildPattern(rounds){
+      const seq=[];
+      for(let i=0;i<rounds;i++){ seq.push('L','W'); }
+      seq.push('W');
+      return seq;
+    }
+
+    // กติกาจำลอง: แพ้ +1 สเต็ป / ชนะ −1 สเต็ป (ไม่ต่ำกว่าสเต็ป 1)
+    // รวม "ยอดยกมา" = -ทุนสะสมก่อนหน้า ตั้งแต่ลำดับแรก
+    function simulatePattern(startStep, odds, startBet, baseSchedule, rounds){
       let schedule = baseSchedule;
       let step = startStep;
-      let cumNet = 0;
+
+      if(step > schedule.rows.length){
+        schedule = ensureScheduleLengthFibo(odds, startBet, step, schedule);
+      }
+      const prevCum = step>1 ? schedule.rows[step-2].cum : 0; // ทุนสะสมก่อนหน้า
+      const carryIn = -prevCum; // ยอดยกมา
+
+      const pattern = buildPattern(rounds);
+      let cumNet = carryIn;
       let totalStake = 0;
       let maxStepUsed = step;
       const lines = [];
@@ -196,29 +170,28 @@
       for(let t=1; t<=pattern.length; t++){
         if(step < 1) step = 1;
         if(step > schedule.rows.length){
-          schedule = ensureScheduleLength(odds, startRaw, step, schedule);
+          schedule = ensureScheduleLengthFibo(odds, startBet, step, schedule);
         }
         const row = schedule.rows[step-1];
         const stake = row.stake;
         const outcome = pattern[t-1];
-        const net = (outcome==='W') ? (odds*stake) : (-stake);
+        const net = outcome==='W' ? round1(odds * stake) : -stake;
 
-        cumNet += net;
-        totalStake += stake;
+        totalStake = round1(totalStake + stake);
+        cumNet = round1(cumNet + net);
 
         lines.push({ turn:t, outcome, step, stake, net, cumNet });
 
-        // เดินสเต็ป: L => +1, W => -1 (ไม่น้อยกว่าตา 1)
+        // เดินสเต็ป
         step = (outcome==='W') ? Math.max(1, step - 1) : (step + 1);
-
         maxStepUsed = Math.max(maxStepUsed, lines[lines.length-1].step);
       }
 
-      return { pattern: pattern.join(''), lines, totalStake, cumNet, maxStepUsed };
+      return { pattern: pattern.join(''), lines, totalStake, cumNet, maxStepUsed, carryIn, prevCum, rounds };
     }
 
-    function renderTable(odds, startRaw, num){
-      const { rows, baseProfit } = generateSchedule(odds, startRaw, num);
+    function renderTable(odds, startBet, num){
+      const { rows, unit } = generateScheduleFibo(odds, startBet, num);
       const tbody = $('#tableBody');
       tbody.innerHTML = '';
 
@@ -227,87 +200,115 @@
         tr.classList.add('clickable');
         tr.dataset.step = String(r.i);
         tr.innerHTML = `
-          <td><span class="tag">ตา ${r.i}</span></td>
-          <td class="right">${fmt0(r.stake)}</td>
-          <td class="right muted">${fmt2(r.raw)}</td>
-          <td class="right">${fmt0(r.cumRounded)}</td>
+          <td><span class="tag">สเต็ป ${r.i}</span></td>
+          <td class="right">${fmt1(r.stake)}</td>
+          <td class="right muted">${fmt0(r.mult)}</td>
+          <td class="right">${fmt1(r.cum)}</td>
           <td class="right muted">${pct6(r.pLoseStreak)}</td>
         `;
-        tr.title = 'คลิกเพื่อดูจำลอง LWLWLW เริ่มที่ตานี้';
+        tr.title = 'คลิกเพื่อจำลองลำดับ เริ่มที่สเต็ปนี้';
         tbody.appendChild(tr);
       });
 
-      // Summary
-      const totalCap = rows[rows.length-1]?.cumRounded ?? 0;
+      const totalCap = rows[rows.length-1]?.cum ?? 0;
       $('#summary').innerHTML = `
-        <span class="pill">กำไรขั้นต่ำต่อรอบ (ฐาน): <b>${fmt2(baseProfit)}</b> บาท</span>
-        <span class="pill">ทุนรวมสูงสุดเพื่อทนแพ้ถึงตาที่กำหนด: <b>${fmt0(totalCap)}</b> บาท</span>
-        <span class="pill">ขนาดเดิมพันสูงสุด (ใน ${num} ตา): <b>${fmt0(Math.max(...rows.map(x=>x.stake)))}</b> บาท</span>
+        <span class="pill">หน่วยฐาน (เริ่มต้น ÷ ค่าน้ำ): <b>${fmt1(unit)}</b> บาท</span>
+        <span class="pill">ทุนรวมสูงสุดถึงสเต็ปที่กำหนด: <b>${fmt1(totalCap)}</b> บาท</span>
+        <span class="pill">เดิมพันสูงสุด (ใน ${num} สเต็ป): <b>${fmt1(Math.max(...rows.map(x=>x.stake)))}</b> บาท</span>
       `;
 
-      // click handlers
       tbody.querySelectorAll('tr.clickable').forEach(tr=>{
         tr.addEventListener('click', ()=>{
           const step = Number(tr.dataset.step);
-          openModal(step, odds, startRaw, {rows, baseProfit});
+          openModal(step, odds, startBet, {rows, unit});
         });
       });
     }
 
-    function openModal(step, odds, startRaw, schedule){
-      const sim = simulateAlternatingLWLWLW(step, odds, startRaw, schedule);
-      const overflow = sim.maxStepUsed > schedule.rows.length;
-      const warn = overflow
-        ? `<div class="pill" style="background:#2a1116;border-color:#3d1a21;color:#ffc2c2">ขยายจำนวนตาชั่วคราวถึงตาที่ ${sim.maxStepUsed} เพื่อจำลองลำดับจากตาที่เลือก</div>`
-        : '';
+    function openModal(step, odds, startBet, schedule){
+      // UI ส่วนหัว + ตัวเลือก "จำนวนรอบ"
+      $('#modalTitle').innerHTML = `จำลองลำดับสลับ <span class="tag">LW</span> ตามจำนวนรอบ และ <span class="tag">+ W ปิดท้าย</span> — เริ่มที่สเต็ป <b>${step}</b>`;
 
-      const rowsHtml = sim.lines.map(l=>`
-        <tr>
-          <td class="right">${l.turn}</td>
-          <td class="right">${l.outcome}</td>
-          <td class="right">ตา ${l.step}</td>
-          <td class="right">${fmt0(l.stake)}</td>
-          <td class="right ${l.net>=0?'':'muted'}">${l.net>=0?('+'+fmt2(l.net)):fmt2(l.net)}</td>
-          <td class="right"><b>${(l.cumNet>=0?'+':'')+fmt2(l.cumNet)}</b></td>
-        </tr>
-      `).join('');
-
-      $('#modalTitle').innerHTML = `จำลองลำดับ <span class="tag">LWLWLW</span> เมื่อ <b>เริ่มที่ตา ${step}</b>`;
-      $('#modalContent').innerHTML = `
-        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px">
+      const controls = `
+        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-bottom:10px;align-items:flex-end">
           <span class="pill">ค่าน้ำ: <b>${odds}</b></span>
-          <span class="pill">เริ่มต้นตาละ: <b>${fmt0(Math.ceil(startRaw))}</b> บาท</span>
-          <span class="pill">รูปแบบ: <b>${sim.pattern}</b></span>
-          ${warn}
+          <span class="pill">เริ่มต้นตาละ: <b>${fmt1(Number(startBet))}</b> บาท</span>
+          <span class="pill">หน่วยฐาน = เริ่มต้น/ค่าน้ำ: <b>${fmt1(schedule.unit)}</b> บาท</span>
+
+          <div class="field" style="min-width:180px">
+            <label for="roundsSel" style="font-size:13px;color:#a9b3c7">จำนวนรอบ (0–9) — สลับ LW ตามรอบ แล้วเพิ่ม W ปิดท้าย</label>
+            <select id="roundsSel" style="background:#0d132a;color:#e8eefc;border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:8px 10px">
+              ${Array.from({length:10}, (_,i)=>`<option value="${i}" ${i===2?'selected':''}>${i} รอบ</option>`).join('')}
+            </select>
+          </div>
         </div>
-        <div class="scroll" style="max-height:48vh;border-top:1px solid rgba(255,255,255,.06)">
-          <table>
-            <thead>
-              <tr>
-                <th>ลำดับ</th>
-                <th class="right">ผล</th>
-                <th class="right">ตาที่ใช้</th>
-                <th class="right">เดิมพัน (บาท)</th>
-                <th class="right">กำไร/ขาดทุน</th>
-                <th class="right">กำไรรวมสะสม</th>
-              </tr>
-            </thead>
-            <tbody>${rowsHtml}</tbody>
-          </table>
-        </div>
-        <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
-          <span class="pill">ทุนที่ใช้รวมในลำดับนี้ (6 ตา): <b>${fmt0(sim.totalStake)}</b> บาท</span>
-          <span class="pill">กำไรรวมเมื่อจบลำดับ: <b>${(sim.cumNet>=0?'+':'')+fmt2(sim.cumNet)}</b> บาท</span>
-        </div>
-        <div class="muted" style="margin-top:8px;font-size:13px">
-          * กติกาเดินสเต็ป: <b>ชนะถอย −1</b> (ไม่น้อยกว่าตา 1), <b>แพ้ขยับ +1</b>
-        </div>
+        <div id="simArea"></div>
       `;
 
+      $('#modalContent').innerHTML = controls;
+
+      // ฟังก์ชันแสดงผลจำลองตามจำนวนรอบ
+      function renderSimArea(rounds){
+        const sim = simulatePattern(step, odds, startBet, schedule, rounds);
+        const overflow = sim.maxStepUsed > schedule.rows.length;
+        const warn = overflow
+          ? `<div class="pill" style="background:#2a1116;border-color:#3d1a21;color:#ffc2c2; margin:6px 0">ขยายจำนวนสเต็ปชั่วคราวถึงสเต็ป ${sim.maxStepUsed} เพื่อจำลอง</div>`
+          : '';
+
+        const rowsHtml = sim.lines.map(l=>`
+          <tr>
+            <td class="right">${l.turn}</td>
+            <td class="right">${l.outcome}</td>
+            <td class="right">สเต็ป ${l.step}</td>
+            <td class="right">${fmt1(l.stake)}</td>
+            <td class="right ${l.net>=0?'':'muted'}">${l.net>=0?('+'+fmt1(l.net)):fmt1(l.net)}</td>
+            <td class="right"><b>${(l.cumNet>=0?'+':'')+fmt1(l.cumNet)}</b></td>
+          </tr>
+        `).join('');
+
+        $('#simArea').innerHTML = `
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin:6px 0 10px 0">
+            <span class="pill">รูปแบบ: <b>${sim.pattern}</b></span>
+            <span class="pill">ยอดยกมา (ขาดทุนก่อนหน้า): <b>${fmt1(sim.carryIn)}</b> บาท</span>
+            ${warn}
+          </div>
+
+          <div class="scroll" style="max-height:48vh;border-top:1px solid rgba(255,255,255,.06)">
+            <table>
+              <thead>
+                <tr>
+                  <th>ลำดับ</th>
+                  <th class="right">ผล</th>
+                  <th class="right">สเต็ปที่ใช้ (Fibo)</th>
+                  <th class="right">เดิมพัน (บาท)</th>
+                  <th class="right">กำไร/ขาดทุน</th>
+                  <th class="right">กำไรรวมสะสม</th>
+                </tr>
+              </thead>
+              <tbody>${rowsHtml}</tbody>
+            </table>
+          </div>
+
+          <div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:12px">
+            <span class="pill">ทุนสะสมก่อนหน้า: <b>${fmt1(sim.prevCum)}</b> บาท</span>
+            <span class="pill">ทุนที่ใช้ในลำดับนี้ (${sim.lines.length} แถว): <b>${fmt1(sim.totalStake)}</b> บาท</span>
+            <span class="pill">กำไรรวมเมื่อจบลำดับ: <b>${(sim.cumNet>=0?'+':'')+fmt1(sim.cumNet)}</b> บาท</span>
+          </div>
+        `;
+      }
+
+      // render ครั้งแรกด้วยค่าเริ่มต้น 2 รอบ
+      renderSimArea(2);
+
+      // ผูกเหตุการณ์เปลี่ยนจำนวนรอบ
+      const sel = $('#roundsSel');
+      sel.addEventListener('change', ()=> renderSimArea(Number(sel.value)));
+
+      // เปิด modal
       const back = $('#modalBackdrop');
       back.style.display = 'flex';
       back.setAttribute('aria-hidden','false');
-      document.body.classList.add('modal-open'); /* ล็อกสกอลล์พื้นหลัง */
+      document.body.classList.add('modal-open');
     }
 
     function closeModal(){
@@ -324,7 +325,6 @@
       const odds = Number($('#odds').value);
       const startBet = Number($('#startBet').value);
       const numSteps = Number($('#numSteps').value);
-
       if(!(odds>0 && startBet>0 && numSteps>=1)){
         alert('กรุณากรอกข้อมูลให้ถูกต้อง');
         return;
