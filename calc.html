@@ -141,15 +141,18 @@
       return generateScheduleFibo(odds, startBet, needLen);
     }
 
-    // สร้างลำดับตามจำนวน "รอบ": สลับ LW ตามรอบ แล้วเพิ่ม W ปิดท้ายเสมอ
+    // ✅ สร้างแพทเทิร์นจาก "จำนวนรอบ"
+    // รอบ = 0 => WW
+    // รอบ >= 1 => (LW ซ้ำตามจำนวนรอบ) แล้ว + W ปิดท้าย
     function buildPattern(rounds){
-      const seq=[];
-      for(let i=0;i<rounds;i++){ seq.push('L','W'); }
+      if (rounds === 0) return ['W','W'];
+      const seq = [];
+      for (let i = 0; i < rounds; i++) seq.push('L','W');
       seq.push('W');
       return seq;
     }
 
-    // กติกาจำลอง: แพ้ +1 สเต็ป / ชนะ −1 สเต็ป (ไม่ต่ำกว่าสเต็ป 1)
+    // เดินสเต็ป: แพ้ +1 / ชนะ −1 (ไม่ต่ำกว่าสเต็ป 1)
     // รวม "ยอดยกมา" = -ทุนสะสมก่อนหน้า ตั้งแต่ลำดับแรก
     function simulatePattern(startStep, odds, startBet, baseSchedule, rounds){
       let schedule = baseSchedule;
@@ -182,7 +185,7 @@
 
         lines.push({ turn:t, outcome, step, stake, net, cumNet });
 
-        // เดินสเต็ป
+        // อัปเดตสเต็ป
         step = (outcome==='W') ? Math.max(1, step - 1) : (step + 1);
         maxStepUsed = Math.max(maxStepUsed, lines[lines.length-1].step);
       }
@@ -226,7 +229,7 @@
     }
 
     function openModal(step, odds, startBet, schedule){
-      // UI ส่วนหัว + ตัวเลือก "จำนวนรอบ"
+      // Header ป๊อปอัป + ตัวเลือกจำนวนรอบ
       $('#modalTitle').innerHTML = `จำลองลำดับสลับ <span class="tag">LW</span> ตามจำนวนรอบ และ <span class="tag">+ W ปิดท้าย</span> — เริ่มที่สเต็ป <b>${step}</b>`;
 
       const controls = `
@@ -235,8 +238,10 @@
           <span class="pill">เริ่มต้นตาละ: <b>${fmt1(Number(startBet))}</b> บาท</span>
           <span class="pill">หน่วยฐาน = เริ่มต้น/ค่าน้ำ: <b>${fmt1(schedule.unit)}</b> บาท</span>
 
-          <div class="field" style="min-width:180px">
-            <label for="roundsSel" style="font-size:13px;color:#a9b3c7">จำนวนรอบ (0–9) — สลับ LW ตามรอบ แล้วเพิ่ม W ปิดท้าย</label>
+          <div class="field" style="min-width:220px">
+            <label for="roundsSel" style="font-size:13px;color:#a9b3c7">
+              จำนวนรอบ (0–9) — <b>0 = WW</b>, 1 = LW + W, 2 = LWLW + W, 3 = LWLWLW + W, …
+            </label>
             <select id="roundsSel" style="background:#0d132a;color:#e8eefc;border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:8px 10px">
               ${Array.from({length:10}, (_,i)=>`<option value="${i}" ${i===2?'selected':''}>${i} รอบ</option>`).join('')}
             </select>
@@ -247,7 +252,6 @@
 
       $('#modalContent').innerHTML = controls;
 
-      // ฟังก์ชันแสดงผลจำลองตามจำนวนรอบ
       function renderSimArea(rounds){
         const sim = simulatePattern(step, odds, startBet, schedule, rounds);
         const overflow = sim.maxStepUsed > schedule.rows.length;
