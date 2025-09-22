@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="th">
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -15,6 +15,7 @@
     .container{ width:min(1400px,96vw); margin:0 auto; background:rgba(255,255,255,.96); border-radius:16px; overflow:clip; box-shadow:0 10px 24px rgba(0,0,0,.12); }
     .header{
       background:linear-gradient(135deg,var(--brand) 0%, var(--brand2) 100%); color:#fff; padding:18px 16px; text-align:center;
+      will-change:transform, opacity;
     }
     .header h1{ margin:0 0 6px; font-size:clamp(1.25rem,1.2rem + 1vw,2rem); text-shadow:0 1px 2px rgba(0,0,0,.25); }
     .header p{ margin:0; opacity:.95; font-size:.95rem; }
@@ -70,11 +71,6 @@
     .inline-two{ display:flex; gap:10px; }
     .inline-two .field{ flex:1 1 50%; }
 
-    /* top action row inside each series card */
-    .actions-top{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin:10px 0; flex-wrap:wrap; }
-    .actions-left{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
-    .actions-right{ display:flex; gap:8px; align-items:center; }
-
     /* scroll container for many rows */
     .rows.scroll{ max-height:420px; overflow-y:auto; border-top:1px solid #eef1f4; }
 
@@ -95,9 +91,21 @@
     .btn-row{ display:flex; gap:10px; flex-wrap:wrap; }
 
     /* ---- Mobile-first tweaks ---- */
+    /* ซ่อน/หุบเมื่อเลื่อนบนมือถือ */
+    @media (max-width:900px){
+      .scroll-hide { transition: transform .25s ease, opacity .25s ease; will-change: transform, opacity; }
+      .scroll-hide.hidden { transform: translateY(-110%); opacity: 0; pointer-events: none; }
+
+      .scroll-collapse { transition: max-height .3s ease, opacity .2s ease, margin .2s ease, padding .2s ease, border-width .2s ease, box-shadow .2s ease; overflow: hidden; }
+      .scroll-collapse.hidden { max-height: 0 !important; opacity: 0; margin: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; border-width: 0 !important; box-shadow: none !important; }
+    }
+
+    /* ทำให้ Next Bet sticky เฉพาะจอใหญ่ */
     @media (min-width:900px){
-  	#nextBetCard{ position: sticky; top: 8px; z-index: 1; }
-	}
+      #nextBetCard{ position: sticky; top: 8px; z-index: 1; }
+      #seriesList{ margin-top: 8px; }
+    }
+
     @media (max-width:600px){
       .inline-two{ flex-direction:column; }
       input[type="number"], select, input[type="text"]{ font-size:18px; padding:14px 14px; }
@@ -109,7 +117,7 @@
 </head>
 <body>
   <div class="container">
-    <div class="header">
+    <div class="header scroll-hide" id="appHeader">
       <h1>🎯 Fibonacci Calculator</h1>
       <p>
         Rule: lose → next index, win → step back <b>1</b> •
@@ -125,7 +133,7 @@
         </div>
 
         <!-- Next Bet -->
-        <div class="card" id="nextBetCard" style="margin-top:12px">
+        <div class="card scroll-collapse" id="nextBetCard" style="margin-top:12px">
           <h2>🎮 Next Bet</h2>
           <div class="form-group">
             <label class="label">Match name</label>
@@ -188,7 +196,9 @@
         <h3 id="randTitle">🎲 Random Picks</h3>
         <button class="close" aria-label="Close" onclick="closeRandom()">×</button>
       </div>
-      <div class="modal-body" id="randomResults"></div>
+      <div class="modal-body" id="randomResults">
+        <!-- เปิด Random ครั้งแรก: ยังไม่สุ่มใหม่จนกด Re-roll -->
+      </div>
       <div class="controls-row" style="padding:12px 16px;">
         <button class="btn" onclick="doRandom()">🔀 Re-roll</button>
         <button class="btn gray" onclick="closeRandom()">Close</button>
@@ -221,6 +231,7 @@
   function getNetOdds(odds){
     const o = parseFloat(odds||0);
     return Math.max(0, o); // net odds only
+    // ถ้าต้องรองรับค่าน้ำแบบ +/− หรือฮ่องกง ฯลฯ ค่อยแปลงเพิ่มเติมที่นี่
   }
   const roundBaht = (n)=> Math.round(n);
   const ceilBaht  = (n)=> Math.ceil(n);
@@ -504,16 +515,80 @@
     el.className = 'total ' + (total>0? 'pos' : (total<0? 'neg':'zero'));
   }
 
-  // ====== Random popup helpers ======
+  // ====== Random popup ======
   function randOf(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
   function rollAll(){
     const picks = { sides: randOf(['Home','Away']), ou: randOf(['Over','Under']), oe: randOf(['Odd','Even']) };
     const el = document.getElementById('randomResults');
     if(el){ el.innerHTML = `<ul class="rand-list"><li><b>Home/Away:</b> ${picks.sides}</li><li><b>Over/Under:</b> ${picks.ou}</li><li><b>Odd/Even:</b> ${picks.oe}</li></ul>`; }
   }
-  function openRandom(){ const m = document.getElementById('randomModal'); if(!m) return; m.classList.remove('hidden');  }
+  function openRandom(){
+    const m = document.getElementById('randomModal');
+    if (!m) return;
+    m.classList.remove('hidden');
+
+    // ถ้ายังไม่เคยสุ่มมาก่อนให้แสดงคำแนะนำไว้เฉย ๆ
+    const el = document.getElementById('randomResults');
+    if (el && !el.innerHTML.trim()) {
+      el.innerHTML = `<p style="margin:0">กด <b>Re-roll</b> เพื่อสุ่มตัวเลือก</p>`;
+    }
+    // ไม่สุ่มใหม่ตรงนี้ เพื่อจำค่าครั้งก่อน
+  }
   function closeRandom(){ const m = document.getElementById('randomModal'); if(!m) return; m.classList.add('hidden'); }
   function doRandom(){ rollAll(); }
+
+  // ====== Hide-on-scroll (mobile only) ======
+  (function initHideOnScroll(){
+    const header = document.getElementById('appHeader');
+    const nextBet = document.getElementById('nextBetCard');
+    if(!header || !nextBet) return;
+
+    const mql = window.matchMedia('(max-width: 900px)');
+    let lastY = window.scrollY || 0;
+    let ticking = false;
+    const THRESH = 12;
+
+    function onScroll(){
+      if(ticking) return;
+      ticking = true;
+      window.requestAnimationFrame(()=>{
+        const y = window.scrollY || 0;
+        const dy = y - lastY;
+
+        if(mql.matches){ // mobile only
+          if(dy > THRESH){
+            // scroll down -> hide
+            header.classList.add('hidden');
+            nextBet.classList.add('hidden');
+          }else if(dy < -THRESH){
+            // scroll up -> show
+            header.classList.remove('hidden');
+            nextBet.classList.remove('hidden');
+          }
+        }else{
+          // desktop: ensure visible
+          header.classList.remove('hidden');
+          nextBet.classList.remove('hidden');
+        }
+
+        lastY = y;
+        ticking = false;
+      });
+    }
+
+    // bind classes for animation
+    header.classList.add('scroll-hide');
+    nextBet.classList.add('scroll-collapse');
+
+    window.addEventListener('scroll', onScroll, {passive:true});
+    window.addEventListener('resize', ()=>{
+      // reset visibility when switching breakpoints
+      if(!mql.matches){
+        header.classList.remove('hidden');
+        nextBet.classList.remove('hidden');
+      }
+    });
+  })();
 
   // ====== Init ======
   document.addEventListener('DOMContentLoaded', function(){
@@ -532,6 +607,6 @@
   window.openRandom = openRandom;
   window.closeRandom = closeRandom;
   window.doRandom = doRandom;
-</script>
+  </script>
 </body>
 </html>
