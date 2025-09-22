@@ -95,9 +95,9 @@
     .btn-row{ display:flex; gap:10px; flex-wrap:wrap; }
 
     /* ---- Mobile-first tweaks ---- */
-    @media (max-width:900px){
-      #nextBetCard{ position:sticky; top:8px; z-index:5; }
-    }
+    @media (min-width:900px){
+  	#nextBetCard{ position: sticky; top: 8px; z-index: 1; }
+	}
     @media (max-width:600px){
       .inline-two{ flex-direction:column; }
       input[type="number"], select, input[type="text"]{ font-size:18px; padding:14px 14px; }
