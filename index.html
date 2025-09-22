@@ -23,7 +23,6 @@
     .header h1{ margin:0 0 6px; font-size:clamp(1.25rem,1.2rem + 1vw,2rem); text-shadow:0 1px 2px rgba(0,0,0,.25); }
     .header p{ margin:0; opacity:.95; font-size:.95rem; }
 
-    /* layout */
     .main{ display:grid; gap:16px; padding:16px; grid-template-columns: 1fr; }
     @media (min-width:900px){ .main{ grid-template-columns: 1fr 360px; padding:24px; gap:24px; } }
 
@@ -45,9 +44,7 @@
     .btn.sm{ padding:8px 12px; font-weight:700; font-size:13px; border-radius:10px; }
 
     /* ghost buttons (ไม่เด่น) */
-    .btn.ghost{
-      background:#fff; color:#495057; border:1px solid #e6e9ee; box-shadow:none;
-    }
+    .btn.ghost{ background:#fff; color:#495057; border:1px solid #e6e9ee; box-shadow:none; }
     .btn.ghost:hover{ background:#f7f9fc; }
     .btn.ghost.danger{ color:#b54d4d; border-color:#f1caca; }
     .btn.ghost.danger:hover{ background:#fff4f4; }
@@ -105,7 +102,7 @@
       .scroll-collapse { transition: max-height .3s ease, opacity .2s ease, margin .2s ease, padding .2s ease, border-width .2s ease, box-shadow .2s ease; overflow: hidden; }
       .scroll-collapse.hidden { max-height: 0 !important; opacity: 0; margin: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; border-width: 0 !important; box-shadow: none !important; }
 
-      /* โหมด keyboard-safe: ทำ Next Bet เป็น bottom sheet */
+      /* โหมด keyboard-safe: Bottom sheet */
       body.kb #appHeader{ display:none !important; }
       body.kb #nextBetCard{
         position: fixed; left: 8px; right: 8px; bottom: env(safe-area-inset-bottom);
@@ -115,11 +112,7 @@
       body.kb .fab{ display:none !important; }
     }
 
-    /* เดสก์ท็อป */
-    @media (min-width:900px){
-      #seriesList{ margin-top: 8px; }
-    }
-
+    @media (min-width:900px){ #seriesList{ margin-top: 8px; } }
     @media (max-width:600px){
       .inline-two{ flex-direction:column; }
       input[type="number"], select, input[type="text"]{ font-size:18px; padding:14px 14px; }
@@ -141,6 +134,11 @@
     .actions-left{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     .actions-right{ display:flex; gap:8px; align-items:center; margin-left:auto; }
     @media (min-width:600px){ .actions-top{ flex-wrap:nowrap; } }
+
+    /* ส่วนหัวของ Next Bet (มีปุ่ม Submit มุมขวาบน) */
+    .nb-head{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
+    .nb-actions{ margin-left:auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
+    .nb-title{ font-size:1.1rem; font-weight:800; border-bottom:2px solid var(--brand); padding-bottom:6px; }
   </style>
 </head>
 <body>
@@ -161,31 +159,34 @@
 
         <!-- Next Bet -->
         <div class="card scroll-collapse" id="nextBetCard" style="margin-top:12px">
-          <h2>🎮 Next Bet</h2>
-          <div class="form-group">
-            <label class="label">Match name</label>
-            <input type="text" id="matchName" placeholder="e.g., Team A vs Team B" />
+          <div class="nb-head">
+            <div class="nb-title">🎮 Next Bet</div>
+            <div class="nb-actions">
+              <button class="btn" id="bettingBtnTop">🎯 Submit</button>
+              <button class="btn gray" id="randomBtnTop">🎲 Random</button>
+            </div>
           </div>
+
+          <!-- ORDER: Select Series -> Match name -> Odds -->
           <div class="inline-two">
             <div class="form-group field">
               <label class="label">Select Series</label>
               <select id="selectedSeries"><option value="">— Choose —</option></select>
             </div>
             <div class="form-group field">
-              <label class="label">Odds value</label>
-              <input type="number" id="odds" value="0.85" step="0.01" min="0.01" max="100" />
+              <label class="label">Match name</label>
+              <input type="text" id="matchName" placeholder="e.g., Team A vs Team B" />
             </div>
+          </div>
+          <div class="form-group field">
+            <label class="label">Odds value</label>
+            <input type="number" id="odds" value="0.85" step="0.01" min="0.01" max="100" />
           </div>
 
           <div class="card" style="background:#f8f9fa">
             <div id="betLines" style="line-height:1.6">
               <div>💵 Stake: <b><span id="calculatedBet">0</span> ฿</b></div>
             </div>
-          </div>
-
-          <div class="controls-row">
-            <button class="btn" id="bettingBtn" onclick="startBetting()">🎯 Submit</button>
-            <button class="btn gray" id="randomBtn" onclick="openRandom()">🎲 Random</button>
           </div>
         </div>
 
@@ -224,9 +225,7 @@
         <h3 id="randTitle">🎲 Random Picks</h3>
         <button class="close" aria-label="Close" onclick="closeRandom()">×</button>
       </div>
-      <div class="modal-body" id="randomResults">
-        <!-- ไม่สุ่มใหม่ตอนเปิด -->
-      </div>
+      <div class="modal-body" id="randomResults"><!-- แสดง ? ครั้งแรก --></div>
       <div class="controls-row" style="padding:12px 16px;">
         <button class="btn" onclick="doRandom()">🔀 Re-roll</button>
         <button class="btn ghost" onclick="closeRandom()">Close</button>
@@ -256,11 +255,11 @@
   function saveData(){ localStorage.setItem('fibonacciBettingNew', JSON.stringify(gameData)); }
 
   // ====== Math helpers ======
-  function getNetOdds(odds){ const o = parseFloat(odds||0); return Math.max(0, o); }
   const roundBaht = (n)=> Math.round(n);
   const ceilBaht  = (n)=> Math.ceil(n);
+  function getNetOdds(odds){ const o = parseFloat(odds||0); return Math.max(0, o); }
 
-  // กติกาใหม่: หลัง Win ถ้า lossBalance > expectedProfit ของสเต็ปถัดไป -> next stake = ceil(loss / netOdds)
+  // กติกา: หลัง Win ถ้า lossBalance > expectedProfit(สเต็ปถัดไป) => next stake = ceil(loss / netOdds)
   function calcStake(series, fibIndex, odds){
     const net = getNetOdds(odds);
     if(net <= 0) return { stake:0, target:0, netOdds:0, isAdjusted:false, defaultStake:0, expectedProfit:0, fibVal:1 };
@@ -351,7 +350,6 @@
       s.currentFibIndex = Math.max(0, s.currentFibIndex - 1);
       s.winStreak = (s.winStreak||0) + 1;
       s.lossBalance = Math.max(0, (s.lossBalance||0) - profitOnWin);
-
       if(s.winStreak >= 2){ s.currentFibIndex = 0; s.winStreak = 0; }
     } else {
       s.currentFibIndex++;
@@ -532,7 +530,10 @@
     const m = document.getElementById('randomModal'); if (!m) return;
     m.classList.remove('hidden');
     const el = document.getElementById('randomResults');
-    if (el && !el.innerHTML.trim()) { el.innerHTML = `<p style="margin:0">กด <b>Re-roll</b> เพื่อสุ่มตัวเลือก</p>`; }
+    if (el && !el.innerHTML.trim()) {
+      // ครั้งแรกแสดง ? รอการ Re-roll
+      el.innerHTML = `<ul class="rand-list"><li><b>Home/Away:</b> ?</li><li><b>Over/Under:</b> ?</li><li><b>Odd/Even:</b> ?</li></ul>`;
+    }
   }
   function closeRandom(){ const m = document.getElementById('randomModal'); if(!m) return; m.classList.add('hidden'); }
   function doRandom(){ rollAll(); }
@@ -542,12 +543,19 @@
     const header = document.getElementById('appHeader');
     const nextBet = document.getElementById('nextBetCard');
     const fab = document.getElementById('fabShow');
+    const submitTop = document.getElementById('bettingBtnTop');
+    const randomTop = document.getElementById('randomBtnTop');
     if(!header || !nextBet || !fab) return;
+
+    // map ปุ่มบนให้เรียกฟังก์ชันเดิม
+    submitTop.addEventListener('click', startBetting);
+    randomTop.addEventListener('click', openRandom);
 
     const mql = window.matchMedia('(max-width: 900px)');
     let lastY = window.scrollY || 0;
     let ticking = false;
-    let lockUI = false; // ล็อกตอนพิมพ์
+    let lockUI = false;
+    let lockTimer = null;
     const THRESH = 12;
 
     function updateFab(){
@@ -563,7 +571,7 @@
         const dy = y - lastY;
 
         if(mql.matches){
-          if(!lockUI){ // ปิด hide-on-scroll ชั่วคราวระหว่างพิมพ์
+          if(!lockUI){
             if(dy > THRESH){ header.classList.add('hidden'); nextBet.classList.add('hidden'); }
             else if(dy < -THRESH){ header.classList.remove('hidden'); nextBet.classList.remove('hidden'); }
             updateFab();
@@ -579,7 +587,14 @@
       });
     }
 
-    // ปุ่ม FAB แสดงการ์ด
+    // แตะภายในการ์ด -> ล็อกไม่ให้หายชั่วคราว (ไว้กด Submit)
+    nextBet.addEventListener('pointerdown', ()=>{
+      lockUI = true;
+      if(lockTimer) clearTimeout(lockTimer);
+      lockTimer = setTimeout(()=>{ lockUI = false; }, 1200);
+    });
+
+    // FAB
     fab.addEventListener('click', ()=>{
       nextBet.classList.remove('hidden');
       header.classList.remove('hidden');
@@ -587,7 +602,7 @@
       window.scrollTo({top: Math.max(0, window.scrollY - 80), behavior:'smooth'});
     });
 
-    // โหมด keyboard-safe: focus/blur ในการ์ด Next Bet
+    // Keyboard-safe: focus/blur
     const inputs = nextBet.querySelectorAll('input,select,textarea');
     inputs.forEach(el=>{
       el.addEventListener('focus', ()=>{
@@ -596,11 +611,9 @@
         header.classList.add('hidden');
         nextBet.classList.remove('hidden');
         updateFab();
-        // เลื่อนให้ฟิลด์อยู่กลางจอ
         setTimeout(()=>{ try{ el.scrollIntoView({block:'center', behavior:'smooth'}); }catch(e){} }, 60);
       });
       el.addEventListener('blur', ()=>{
-        // รอให้โฟกัสย้ายเสร็จค่อยเช็คว่ายังอยู่ในการ์ดหรือไม่
         setTimeout(()=>{
           const active = document.activeElement;
           if(!nextBet.contains(active)){
@@ -631,7 +644,7 @@
     if(mb){ mb.addEventListener('change', function(){ gameData.minBet = Math.max(1, parseInt(this.value||'25')); updateDisplay(); saveData(); }); }
   });
 
-  // Expose for inline handlers
+  // expose
   window.createNewSeries = createNewSeries;
   window.resetAll = resetAll;
   window.startBetting = startBetting;
