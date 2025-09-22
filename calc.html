@@ -38,16 +38,39 @@
     .right{text-align:right} .muted{color:var(--muted)}
     .tag{font-size:11px;padding:4px 8px;border-radius:999px;background:#0f1a3a;border:1px solid rgba(255,255,255,.06);color:#cfe0ff}
     .scroll{max-height:60vh;overflow:auto;border-top:1px solid rgba(255,255,255,.06)}
+
     /* Popup on top & lock scroll */
-    .modal-backdrop{position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;align-items:center;justify-content:center;padding:16px;z-index:9999}
-    .modal{width:min(950px,98vw);background:var(--card);border:1px solid rgba(255,255,255,.08);border-radius:18px;box-shadow:var(--shadow);position:relative;z-index:10000}
-    .modal header{border-bottom:1px solid rgba(255,255,255,.08)}
-    .modal .content{padding:16px}
-    .modal .actions{display:flex;justify-content:flex-end;padding:0 16px 16px}
-    .btn{background:#101939;color:#e6eeff;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:10px 12px;cursor:pointer}
+    .modal-backdrop{
+      position:fixed;inset:0;background:rgba(0,0,0,.55);display:none;
+      align-items:center;justify-content:center;padding:16px;z-index:9999
+    }
+    .modal{
+      width:min(950px,98vw);background:var(--card);border:1px solid rgba(255,255,255,.08);
+      border-radius:18px;box-shadow:var(--shadow);position:relative;z-index:10000;max-height:92vh;display:flex;flex-direction:column
+    }
+    .modal header{
+      position:sticky;top:0;background:var(--card);
+      border-bottom:1px solid rgba(255,255,255,.08);z-index:2;display:flex;align-items:center;justify-content:space-between;padding:14px 16px
+    }
+    .modal .content{padding:16px;overflow:auto}
+    .modal .actions{position:sticky;bottom:0;background:var(--card);border-top:1px solid rgba(255,255,255,.08);
+      display:flex;gap:8px;justify-content:flex-end;padding:10px 16px}
+    .btn{background:#101939;color:#e6eeff;border:1px solid rgba(255,255,255,.1);border-radius:10px;padding:12px 14px;cursor:pointer}
     .btn:hover{filter:brightness(1.05)}
+    /* ปุ่มปิด (X) สำหรับมือถือ: hit-target ≥ 44px */
+    .icon-close{
+      width:44px;height:44px;display:inline-flex;align-items:center;justify-content:center;
+      border-radius:10px;border:1px solid rgba(255,255,255,.12);background:#0e1736;color:#e8eefc;cursor:pointer
+    }
+    .icon-close:hover{filter:brightness(1.05)}
+    .icon-close svg{width:22px;height:22px}
     body.modal-open{overflow:hidden}
-    @media (max-width:820px){.controls{grid-template-columns:1fr 1fr} header{flex-direction:column;align-items:flex-start}}
+
+    @media (max-width:820px){
+      .controls{grid-template-columns:1fr 1fr}
+      header{flex-direction:column;align-items:flex-start}
+      .btn{padding:12px 16px}
+    }
   </style>
 </head>
 <body>
@@ -100,9 +123,12 @@
 
   <!-- Modal -->
   <div class="modal-backdrop" id="modalBackdrop" role="dialog" aria-modal="true" aria-hidden="true">
-    <div class="modal">
+    <div class="modal" role="document" aria-labelledby="modalTitle">
       <header>
         <h1 id="modalTitle" style="font-size:18px;margin:0"></h1>
+        <button class="icon-close" id="closeModalX" aria-label="ปิด">
+          <svg viewBox="0 0 24 24" fill="none"><path d="M6 6l12 12M18 6L6 18" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        </button>
       </header>
       <div class="content" id="modalContent"></div>
       <div class="actions">
@@ -143,7 +169,7 @@
 
     // ✅ สร้างแพทเทิร์นจาก "จำนวนรอบ"
     // รอบ = 0 => WW
-    // รอบ >= 1 => (LW ซ้ำตามจำนวนรอบ) แล้ว + W ปิดท้าย
+    // รอบ ≥ 1 => (LW ซ้ำตามจำนวนรอบ) แล้ว + W ปิดท้าย
     function buildPattern(rounds){
       if (rounds === 0) return ['W','W'];
       const seq = [];
@@ -209,7 +235,7 @@
           <td class="right">${fmt1(r.cum)}</td>
           <td class="right muted">${pct6(r.pLoseStreak)}</td>
         `;
-        tr.title = 'คลิกเพื่อจำลองลำดับ เริ่มที่สเต็ปนี้';
+        tr.title = 'แตะเพื่อจำลองลำดับ เริ่มที่สเต็ปนี้';
         tbody.appendChild(tr);
       });
 
@@ -242,7 +268,7 @@
             <label for="roundsSel" style="font-size:13px;color:#a9b3c7">
               จำนวนรอบ (0–9) — <b>0 = WW</b>, 1 = LW + W, 2 = LWLW + W, 3 = LWLWLW + W, …
             </label>
-            <select id="roundsSel" style="background:#0d132a;color:#e8eefc;border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:8px 10px">
+            <select id="roundsSel" style="background:#0d132a;color:#e8eefc;border:1px solid rgba(255,255,255,.15);border-radius:10px;padding:10px 12px">
               ${Array.from({length:10}, (_,i)=>`<option value="${i}" ${i===2?'selected':''}>${i} รอบ</option>`).join('')}
             </select>
           </div>
@@ -304,7 +330,7 @@
       // render ครั้งแรกด้วยค่าเริ่มต้น 2 รอบ
       renderSimArea(2);
 
-      // ผูกเหตุการณ์เปลี่ยนจำนวนรอบ
+      // เปลี่ยนจำนวนรอบ
       const sel = $('#roundsSel');
       sel.addEventListener('change', ()=> renderSimArea(Number(sel.value)));
 
@@ -313,6 +339,9 @@
       back.style.display = 'flex';
       back.setAttribute('aria-hidden','false');
       document.body.classList.add('modal-open');
+
+      // โฟกัสปุ่ม X เพื่อการเข้าถึงที่ดีขึ้น
+      const xbtn = $('#closeModalX'); if (xbtn) try { xbtn.focus(); } catch(e){}
     }
 
     function closeModal(){
@@ -322,8 +351,15 @@
       back.setAttribute('aria-hidden','true');
     }
 
-    $('#closeModal').addEventListener('click', closeModal);
-    $('#modalBackdrop').addEventListener('click', (e)=>{ if(e.target.id==='modalBackdrop') closeModal(); });
+    // ปิดแบบต่าง ๆ (เพื่อใช้งานง่ายบนมือถือ)
+    document.addEventListener('keydown', (e)=>{ if(e.key==='Escape') closeModal(); });
+    document.addEventListener('click', (e)=>{
+      if(e.target && e.target.id === 'modalBackdrop') closeModal();
+    });
+    // ปุ่มปิด
+    document.addEventListener('click', (e)=>{
+      if(e.target && (e.target.id === 'closeModal' || e.target.id === 'closeModalX')) closeModal();
+    });
 
     $('#calcBtn').addEventListener('click', ()=>{
       const odds = Number($('#odds').value);
