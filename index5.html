@@ -1,0 +1,480 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Fibonacci Calculator I</title>
+  <style>
+    :root { --bg1:#667eea; --bg2:#764ba2; --brand:#4facfe; --brand2:#00f2fe; --ok:#56ab2f; --bad:#ff416c; --muted:#757f9a; }
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(135deg,var(--bg1) 0%, var(--bg2) 100%); padding:10px; }
+    .container{ width:min(1400px,96vw); margin:0 auto; background:rgba(255,255,255,.96); border-radius:16px; overflow:clip; box-shadow:0 10px 24px rgba(0,0,0,.12); }
+    .header{ background:linear-gradient(135deg,var(--brand) 0%, var(--brand2) 100%); color:#fff; padding:18px 16px; text-align:center; }
+    .header h1{ margin:0 0 6px; font-size:clamp(1.25rem,1.2rem + 1vw,2rem); text-shadow:0 1px 2px rgba(0,0,0,.25); }
+    .header p{ margin:0; opacity:.95; font-size:.95rem; }
+
+    /* layout */
+    .main{ display:grid; gap:16px; padding:16px; grid-template-columns: 1fr; }
+    @media (min-width:900px){ .main{ grid-template-columns: 1fr 360px; padding:24px; gap:24px; } }
+
+    .card{ background:#fff; border-radius:14px; padding:16px; border:1px solid rgba(0,0,0,.06); box-shadow:0 4px 12px rgba(0,0,0,.06); }
+    .card h2{ margin:0 0 10px; font-size:1.1rem; border-bottom:2px solid var(--brand); padding-bottom:8px; }
+
+    .form-group{ margin:12px 0; }
+    .label{ display:block; font-size:.92rem; color:#444; margin-bottom:6px; font-weight:600; }
+    input[type="number"], select, input[type="text"]{ width:100%; border:2px solid #e1e5e9; border-radius:12px; padding:12px 14px; font-size:16px; transition:.2s border-color, .2s box-shadow; }
+    input:focus, select:focus{ outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(79,172,254,.15); }
+
+    .btn{ width:auto; border:0; border-radius:12px; padding:12px 14px; font-weight:700; cursor:pointer; background:linear-gradient(135deg,var(--brand) 0%, var(--brand2) 100%); color:#fff; margin:6px 0; font-size:15px; }
+    .btn:hover{ filter:brightness(1.05); }
+    .btn.ok{ background:linear-gradient(135deg,var(--ok), #a8e6cf); }
+    .btn.bad{ background:linear-gradient(135deg,var(--bad), #ff6b6b); }
+    .btn.gray{ background:linear-gradient(135deg,#757f9a,#d7dde8); }
+    .btn.sm{ padding:6px 10px; font-weight:600; font-size:12px; border-radius:8px; }
+
+    .stats{ background:linear-gradient(135deg,#a8edea 0%, #fed6e3 100%); border-radius:12px; padding:18px; text-align:center; }
+    .stats h3{ margin:0 0 8px; }
+    .total{ font-size:1.4rem; font-weight:800; }
+    .total.pos{ color:var(--ok);} .total.neg{ color:var(--bad);} .total.zero{ color:var(--muted);}  
+
+    .series{ border-left:4px solid var(--brand); margin:14px 0; }
+    .series .head{ display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e9edf2; padding-bottom:10px; }
+    .series .title{ font-weight:800; font-size:1.05rem; }
+    .pill{ font-weight:800; padding:6px 10px; border-radius:999px; }
+    .pill.pos{ background:rgba(86,171,47,.12); color:var(--ok);} 
+    .pill.neg{ background:rgba(255,65,108,.12); color:var(--bad);} 
+    .pill.zero{ background:rgba(117,127,154,.12); color:var(--muted);} 
+
+    /* one-line report rows */
+    details.row{ border-bottom:1px dashed #e9edf2; padding:8px 0; }
+    details.row summary{ list-style:none; display:flex; gap:8px; align-items:center; cursor:pointer; }
+    details.row summary::-webkit-details-marker{ display:none; }
+    .col-match{ flex:1 1 auto; min-width:0; }
+    .truncate{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+    .col-odds,.col-stake,.col-fib{ flex:0 0 auto; font-size:.9rem; color:#444; }
+    .badge-mini{ padding:2px 6px; border-radius:999px; font-weight:800; font-size:.75rem; }
+    .badge-mini.win{ background:rgba(86,171,47,.15); color:var(--ok);} 
+    .badge-mini.lose{ background:rgba(255,65,108,.15); color:var(--bad);} 
+    .badge-mini.wait{ background:rgba(255,193,7,.15); color:#b8860b; }
+    .row-detail{ padding:8px 8px 0 34px; color:#555; font-size:.9rem; }
+
+    .controls-row{ display:flex; gap:10px; flex-wrap:wrap; }
+    .inline-two{ display:flex; gap:10px; }
+    .inline-two .field{ flex:1 1 50%; }
+
+    /* top action row inside each series card */
+    .actions-top{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin:10px 0; }
+    .actions-left{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .actions-right{ display:flex; gap:8px; align-items:center; }
+
+    /* scroll container for many rows */
+    .rows.scroll{ max-height:420px; overflow-y:auto; border-top:1px solid #eef1f4; }
+      /* Fibonacci chips */
+    .fib{ display:flex; flex-wrap:wrap; gap:8px; }
+    .chip{ display:inline-block; background:#ecf2ff; border:1px solid #e1e5e9; border-radius:8px; padding:6px 10px; font-weight:700; position:relative; }
+    .chip .i{ position:absolute; top:-6px; right:-6px; width:16px; height:16px; border-radius:50%; background:#333; color:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; }
+      /* Modal for random picks */
+    .modal{ position:fixed; inset:0; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; padding:16px; z-index:50; }
+    .modal.hidden{ display:none; }
+    .modal-card{ background:#fff; width:min(520px,92vw); border-radius:14px; box-shadow:0 10px 24px rgba(0,0,0,.2); overflow:hidden; }
+    .modal-head{ display:flex; justify-content:space-between; align-items:center; padding:12px 16px; border-bottom:1px solid #eef1f4; }
+    .modal-head h3{ margin:0; font-size:1.05rem; }
+    .modal-body{ padding:16px; }
+    .rand-list{ margin:0; padding-left:18px; line-height:1.8; font-size:1rem; }
+    .close{ background:transparent; border:0; font-size:22px; cursor:pointer; }
+    .btn-row{ display:flex; gap:10px; flex-wrap:wrap; }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>🎯 Fibonacci Calculator</h1>
+      <p>Rule: lose → next index, win → step back 2 • Stake = (base × Fibonacci) ÷ net odds (rounded)</p>
+    </div>
+
+    <div class="main">
+      <!-- LEFT: Overall + Next Bet + Series list -->
+      <section>
+        <div class="stats">
+          <!-- <h3>📈 Overall</h3> -->
+          <div class="total" id="totalProfit">0</div>
+          <!-- <div>THB</div> -->
+        </div>
+
+        <!-- Next Bet directly under Overall -->
+        <div class="card" id="nextBetCard" style="margin-top:12px">
+          <h2>🎮 Next Bet</h2>
+          <div class="form-group">
+            <label class="label">Match name</label>
+            <input type="text" id="matchName" placeholder="e.g., Team A vs Team B" />
+          </div>
+          <div class="inline-two">
+            <div class="form-group field">
+              <label class="label">Select Series</label>
+              <select id="selectedSeries"><option value="">— Choose —</option></select>
+            </div>
+            <div class="form-group field">
+              <label class="label">Odds value</label>
+              <input type="number" id="odds" value="0.95" step="0.01" min="0.01" max="100" />
+            </div>
+          </div>
+
+          <div class="card" style="background:#f8f9fa">
+            <div id="betLines" style="line-height:1.6">
+              <div>💵 Stake: <b><span id="calculatedBet">0</span> ฿</b></div>
+            </div>
+          </div>
+
+          <div class="btn-row">
+            <button class="btn" id="bettingBtn" onclick="startBetting()">🎯 Submit</button>
+            <button class="btn gray" id="randomBtn" onclick="openRandom()">🎲 Random</button>
+          </div>
+        </div>
+
+        <!-- Series list -->
+        <div id="seriesList"></div>
+      </section>
+
+      <!-- RIGHT: (empty on desktop; reserved) -->
+      <section>
+        <!-- intentionally left empty -->
+      </section>
+    </div>
+
+    <!-- BOTTOM: Series settings (less frequent) -->
+    <section class="card" id="seriesSettingsSection" style="margin:0 16px 16px;">
+      <h2>📊 Series Settings</h2>
+      <div class="form-group">
+        <label class="label">Base unit (THB)</label>
+        <input type="number" id="minBet" value="25" min="1" />
+      </div>
+
+      <div class="card" style="background:#f8f9fa">
+        <h3 style="margin:0 0 8px; font-size:1rem;">🔢 Fibonacci Sequence</h3>
+        <div class="fib" id="fibSequence"></div>
+      </div>
+      <div class="controls-row">
+        <button class="btn" onclick="createNewSeries()">📝 New Series</button>
+        <button class="btn gray" onclick="resetAll()">🗑️ Reset All</button>
+      </div>
+    </section>
+  </div>
+
+  <script>
+  // ====== State ======
+  let gameData = {
+    minBet: 25,
+    lastOdds: 0.95,
+    fibSequence: [1,1,2,3,5,8,13,21,34,55,89,144],
+    series: []
+  };
+
+  // ====== Persistence ======
+  function loadData(){
+    try{
+      const saved = JSON.parse(localStorage.getItem('fibonacciBettingNew')||'{}');
+      gameData = { ...gameData, ...saved };
+    }catch(e){}
+    const oddsInput = document.getElementById('odds');
+    if(oddsInput){ oddsInput.value = String(gameData.lastOdds ?? 0.95); }
+    updateDisplay();
+  }
+  function saveData(){ localStorage.setItem('fibonacciBettingNew', JSON.stringify(gameData)); }
+
+  // ====== Math helpers ======
+  function getNetOdds(odds){
+    const o = parseFloat(odds||0);
+    return Math.max(0, o); // net odds only
+  }
+  function calcStake(series, fibIndex, odds){
+    // stake = (base * Fibonacci(seq)) / netOdds + max(0, (lossBalance - base)/2)
+    const net = getNetOdds(odds);
+    if(net <= 0) return { stake:0, target:0, netOdds:0 };
+    const idx = Math.min(fibIndex, gameData.fibSequence.length-1);
+    const fibVal = gameData.fibSequence[idx];
+    const base = series.minBet;
+    const lossBal = Math.max(0, Number(series.lossBalance||0));
+    const basePart = (base * fibVal) / net;
+    const extra = lossBal > base ? (lossBal - base) / 2 : 0;
+    const raw = basePart + extra;
+    const stake = Math.max(1, Math.round(raw));
+    return { stake, target: base * fibVal, netOdds: net };
+  }
+
+  // ====== CRUD ======
+  function createNewSeries(){
+    const minBet = Math.max(1, parseInt(document.getElementById('minBet').value||'25'));
+    gameData.minBet = minBet;
+    const s = {
+      id: Date.now(),
+      name: `Series ${gameData.series.length+1}`,
+      minBet,
+      currentFibIndex: 0,
+      games: [],
+      totalProfit: 0,
+      isCompleted: false,
+      currentBetting: null,
+      lossBalance: 0,
+      winStreak: 0
+    };
+    // old -> new: append to end
+    gameData.series.push(s);
+    updateDisplay(); saveData();
+  }
+  function resetAll(){
+    if(!confirm('Reset all data?')) return;
+    gameData = { minBet:25, lastOdds:0.95, fibSequence:[1,1,2,3,5,8,13,21,34,55,89,144], series:[] };
+    updateDisplay(); saveData();
+  }
+
+  // ====== Betting flow ======
+  function startBetting(){
+    const sid = parseInt(document.getElementById('selectedSeries').value);
+    const name = (document.getElementById('matchName').value||'').trim();
+    const odds = parseFloat(document.getElementById('odds').value);
+    if(!sid){ alert('Please choose a series'); return; }
+    if(!name){ alert('Please enter a match name'); return; }
+    const series = gameData.series.find(s=>s.id===sid); if(!series) return;
+    if(typeof series.lossBalance !== 'number') series.lossBalance = 0;
+    if(typeof series.winStreak !== 'number') series.winStreak = 0;
+
+    const C = calcStake(series, series.currentFibIndex, odds);
+    if(!C.netOdds){ alert('Invalid odds'); return; }
+
+    series.currentBetting = { matchName: name, odds, betAmount: C.stake, fibIndex: series.currentFibIndex };
+
+    document.getElementById('selectedSeries').value = '';
+    document.getElementById('matchName').value = '';
+    // remember last odds
+    gameData.lastOdds = isNaN(odds) ? 0.95 : odds; saveData();
+    updateDisplay();
+  }
+
+  function recordResult(seriesId, isWin){
+    const s = gameData.series.find(x=>x.id===seriesId); if(!s || !s.currentBetting) return;
+    if(typeof s.lossBalance !== 'number') s.lossBalance = 0;
+    if(typeof s.winStreak !== 'number') s.winStreak = 0;
+    const b = s.currentBetting; const netOdds = getNetOdds(b.odds);
+    const profitOnWin = Math.round(b.betAmount * netOdds);
+    const netProfit = isWin ? profitOnWin : -b.betAmount;
+
+    if(isWin){
+      s.currentFibIndex = Math.max(0, s.currentFibIndex - 1);
+      s.winStreak = (s.winStreak||0) + 1;
+      s.lossBalance = Math.max(0, (s.lossBalance||0) - profitOnWin);
+      // two consecutive wins -> reset to index 0
+      if(s.winStreak >= 2){ s.currentFibIndex = 0; s.winStreak = 0; }
+    } else {
+      s.currentFibIndex++;
+      s.winStreak = 0;
+      s.lossBalance = (s.lossBalance||0) + b.betAmount;
+    }
+
+    const rec = { matchName: b.matchName, odds: b.odds, fibIndex: b.fibIndex, betAmount: b.betAmount, result: isWin? 'Win':'Lose' };
+    s.games.push(rec); s.totalProfit += netProfit; s.currentBetting = null;
+    updateDisplay(); saveData();
+  }
+
+  function completeSeries(id){
+    const s = gameData.series.find(x=>x.id===id); if(!s) return;
+    s.isCompleted = true; s.currentBetting = null; updateDisplay(); saveData();
+  }
+  function deleteSeries(id){
+    if(!confirm('Delete this series?')) return;
+    gameData.series = gameData.series.filter(x=>x.id!==id); updateDisplay(); saveData();
+  }
+
+  // ====== UI ======
+  function truncTitle(input, max=30){
+    const s = String(input || '');
+    try{
+      if(typeof Intl !== 'undefined' && Intl.Segmenter){
+        const seg = new Intl.Segmenter('th', { granularity: 'grapheme' });
+        const parts = Array.from(seg.segment(s), x => x.segment);
+        if(parts.length > max) return parts.slice(0, max).join('') + '...';
+        return s;
+      }
+    }catch(e){}
+    return s.length > max ? s.slice(0, max) + '...' : s;
+  }
+
+  function updateDisplay(){
+    // sequence chips
+    const fc = document.getElementById('fibSequence');
+    if(fc){
+      fc.innerHTML='';
+      gameData.fibSequence.forEach((v,i)=>{
+        const e=document.createElement('span'); e.className='chip'; e.innerHTML=String(v)+`<span class="i">${i}</span>`; fc.appendChild(e);
+      });
+    }
+
+    // series selector
+    const sel = document.getElementById('selectedSeries');
+    if(sel){
+      sel.innerHTML='<option value="">— Choose —</option>';
+      gameData.series.filter(s=>!s.isCompleted).forEach(s=>{
+        const o=document.createElement('option'); o.value=String(s.id); o.textContent=`${s.name} (index: ${s.currentFibIndex})`; sel.appendChild(o);
+      });
+    }
+
+    updateBetCalculationPanel();
+    renderSeries();
+    renderTotals();
+  }
+
+  function updateBetCalculationPanel(){
+    const sel = document.getElementById('selectedSeries');
+    const oddsInput = document.getElementById('odds');
+    const betSpan = document.getElementById('calculatedBet');
+    if(!sel || !oddsInput || !betSpan) return;
+
+    function calc(){
+      const sid = parseInt(sel.value);
+      const s = gameData.series.find(x=>x.id===sid);
+      if(!s){ betSpan.textContent = '0'; return; }
+      const odds = parseFloat(oddsInput.value)||0.95; const C = calcStake(s, s.currentFibIndex, odds);
+      betSpan.textContent = (C.stake||0).toLocaleString();
+    }
+    calc();
+    sel.onchange = calc;
+    oddsInput.oninput = function(){ gameData.lastOdds = parseFloat(this.value||'0.95')||0.95; saveData(); calc(); };
+  }
+
+  function renderSeries(){
+    const wrap = document.getElementById('seriesList'); if(!wrap) return; wrap.innerHTML='';
+    const list = gameData.series.slice().sort((a,b)=> a.id - b.id); // old -> new
+    list.forEach(s=>{
+      const div = document.createElement('div'); div.className='card series';
+      const pc = s.totalProfit>0? 'pill pos': (s.totalProfit<0? 'pill neg':'pill zero');
+      // header
+      div.innerHTML = `
+        <div class="head">
+          <div class="title">${s.name}</div>
+          <div class="${pc}">${s.totalProfit>0?'+':''}${s.totalProfit.toLocaleString()} ฿</div>
+        </div>
+      `;
+
+      // actions on top
+      const actionsTop = document.createElement('div'); actionsTop.className = 'actions-top';
+      const left = document.createElement('div'); left.className = 'actions-left';
+      const right = document.createElement('div'); right.className = 'actions-right';
+
+      if(s.currentBetting){
+        const btnW = document.createElement('button'); btnW.className = 'btn ok'; btnW.textContent = '✅ Win'; btnW.onclick = function(){ recordResult(s.id, true); };
+        const btnL = document.createElement('button'); btnL.className = 'btn bad'; btnL.textContent = '❌ Lose'; btnL.onclick = function(){ recordResult(s.id, false); };
+        left.appendChild(btnW); left.appendChild(btnL);
+      }
+      const btnC = document.createElement('button'); btnC.className = 'btn sm gray'; btnC.textContent = 'Close'; btnC.onclick = function(){ completeSeries(s.id); };
+      const btnD = document.createElement('button'); btnD.className = 'btn sm bad'; btnD.style.filter = 'none'; btnD.textContent = 'Delete'; btnD.onclick = function(){ deleteSeries(s.id); };
+      right.appendChild(btnC); right.appendChild(btnD);
+
+      actionsTop.appendChild(left); actionsTop.appendChild(right); div.appendChild(actionsTop);
+
+      // rows container
+      const rows = document.createElement('div'); rows.id = `rows-${s.id}`; rows.className = 'rows';
+      div.appendChild(rows);
+      wrap.appendChild(div);
+
+      // current betting row — first
+      let rowCount = 0;
+      if(s.currentBetting){
+        const b = s.currentBetting; const mnShort = truncTitle(b.matchName);
+        const d = document.createElement('details'); d.className='row';
+        d.innerHTML = `
+          <summary>
+            <span class="badge-mini wait">Betting</span>
+            <span class="col-match truncate" title="${mnShort}">${mnShort}</span>
+            <span class="col-odds">${b.odds}</span>
+            <span class="col-stake"><b>${b.betAmount.toLocaleString()}฿</b></span>
+            <span class="col-fib">(${b.fibIndex})</span>
+          </summary>
+          <div class="row-detail">${b.matchName}</div>
+        `;
+        rows.appendChild(d); rowCount++;
+      }
+
+      // finished games — newest first
+      const games = s.games.slice().reverse();
+      games.forEach(function(g){
+        const mnShort = truncTitle(g.matchName);
+        const d = document.createElement('details'); d.className='row';
+        d.innerHTML = `
+          <summary>
+            <span class="badge-mini ${g.result==='Win'?'win':'lose'}">${g.result}</span>
+            <span class="col-match truncate" title="${mnShort}">${mnShort}</span>
+            <span class="col-odds">${g.odds}</span>
+            <span class="col-stake"><b>${g.betAmount.toLocaleString()}฿</b></span>
+            <span class="col-fib">(${g.fibIndex})</span>
+          </summary>
+          <div class="row-detail">${g.matchName}</div>
+        `;
+        rows.appendChild(d); rowCount++;
+      });
+
+      if(rowCount > 10){ rows.classList.add('scroll'); }
+    });
+  }
+
+  function renderTotals(){
+    const total = gameData.series.reduce((a,s)=> a + s.totalProfit, 0);
+    const el = document.getElementById('totalProfit'); if(!el) return;
+    el.textContent = (total>0?'+':'') + total.toLocaleString();
+    el.className = 'total ' + (total>0? 'pos' : (total<0? 'neg':'zero'));
+  }
+
+  // ====== Random popup helpers ======
+  function randOf(arr){ return arr[Math.floor(Math.random()*arr.length)]; }
+  function rollAll(){
+    const picks = { sides: randOf(['Home','Away']), ou: randOf(['Over','Under']), oe: randOf(['Odd','Even']) };
+    const el = document.getElementById('randomResults');
+    if(el){ el.innerHTML = `<ul class="rand-list"><li><b>Home/Away:</b> ${picks.sides}</li><li><b>Over/Under:</b> ${picks.ou}</li><li><b>Odd/Even:</b> ${picks.oe}</li></ul>`; }
+  }
+  function openRandom(){
+    let m = document.getElementById('randomModal');
+    if(!m){
+      const div = document.createElement('div');
+      div.id = 'randomModal';
+      div.className = 'modal hidden';
+      div.setAttribute('role','dialog');
+      div.setAttribute('aria-modal','true');
+      div.setAttribute('aria-labelledby','randTitle');
+      div.innerHTML = `
+        <div class="modal-card">
+          <div class="modal-head">
+            <h3 id="randTitle">🎲 Random Picks</h3>
+            <button class="close" aria-label="Close" onclick="closeRandom()">×</button>
+          </div>
+          <div class="modal-body" id="randomResults"></div>
+          <div class="controls-row" style="padding:12px 16px;">
+            <button class="btn" onclick="doRandom()">🔀 Re-roll</button>
+            <button class="btn gray" onclick="closeRandom()">Close</button>
+          </div>
+        </div>`;
+      document.body.appendChild(div); m = div;
+    }
+    m.classList.remove('hidden'); rollAll();
+  }
+  function closeRandom(){ const m = document.getElementById('randomModal'); if(!m) return; m.classList.add('hidden'); }
+  function doRandom(){ rollAll(); }
+
+  // ====== Init ======
+  document.addEventListener('DOMContentLoaded', function(){
+    loadData();
+    const mb = document.getElementById('minBet');
+    if(mb){ mb.addEventListener('change', function(){ gameData.minBet = Math.max(1, parseInt(this.value||'25')); updateDisplay(); saveData(); }); }
+  });
+
+  // Expose for inline handlers
+  window.createNewSeries = createNewSeries;
+  window.resetAll = resetAll;
+  window.startBetting = startBetting;
+  window.recordResult = recordResult;
+  window.completeSeries = completeSeries;
+  window.deleteSeries = deleteSeries;
+  window.openRandom = openRandom;
+  window.closeRandom = closeRandom;
+  window.doRandom = doRandom;
+</script>
+</body>
+</html>

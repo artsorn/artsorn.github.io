@@ -8,9 +8,14 @@
     :root { --bg1:#667eea; --bg2:#764ba2; --brand:#4facfe; --brand2:#00f2fe; --ok:#56ab2f; --bad:#ff416c; --muted:#757f9a; }
     *{ box-sizing:border-box; }
     html,body{ height:100%; }
-    body{ margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial; background:linear-gradient(135deg,var(--bg1) 0%, var(--bg2) 100%); padding:10px; }
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
+      background:linear-gradient(135deg,var(--bg1) 0%, var(--bg2) 100%); padding:10px;
+    }
     .container{ width:min(1400px,96vw); margin:0 auto; background:rgba(255,255,255,.96); border-radius:16px; overflow:clip; box-shadow:0 10px 24px rgba(0,0,0,.12); }
-    .header{ background:linear-gradient(135deg,var(--brand) 0%, var(--brand2) 100%); color:#fff; padding:18px 16px; text-align:center; }
+    .header{
+      background:linear-gradient(135deg,var(--brand) 0%, var(--brand2) 100%); color:#fff; padding:18px 16px; text-align:center;
+    }
     .header h1{ margin:0 0 6px; font-size:clamp(1.25rem,1.2rem + 1vw,2rem); text-shadow:0 1px 2px rgba(0,0,0,.25); }
     .header p{ margin:0; opacity:.95; font-size:.95rem; }
 
@@ -23,7 +28,9 @@
 
     .form-group{ margin:12px 0; }
     .label{ display:block; font-size:.92rem; color:#444; margin-bottom:6px; font-weight:600; }
-    input[type="number"], select, input[type="text"]{ width:100%; border:2px solid #e1e5e9; border-radius:12px; padding:12px 14px; font-size:16px; transition:.2s border-color, .2s box-shadow; }
+    input[type="number"], select, input[type="text"]{
+      width:100%; border:2px solid #e1e5e9; border-radius:12px; padding:12px 14px; font-size:16px; transition:.2s border-color, .2s box-shadow;
+    }
     input:focus, select:focus{ outline:none; border-color:var(--brand); box-shadow:0 0 0 3px rgba(79,172,254,.15); }
 
     .btn{ width:auto; border:0; border-radius:12px; padding:12px 14px; font-weight:700; cursor:pointer; background:linear-gradient(135deg,var(--brand) 0%, var(--brand2) 100%); color:#fff; margin:6px 0; font-size:15px; }
@@ -31,7 +38,7 @@
     .btn.ok{ background:linear-gradient(135deg,var(--ok), #a8e6cf); }
     .btn.bad{ background:linear-gradient(135deg,var(--bad), #ff6b6b); }
     .btn.gray{ background:linear-gradient(135deg,#757f9a,#d7dde8); }
-    .btn.sm{ padding:6px 10px; font-weight:600; font-size:12px; border-radius:8px; }
+    .btn.sm{ padding:8px 12px; font-weight:700; font-size:13px; border-radius:10px; }
 
     .stats{ background:linear-gradient(135deg,#a8edea 0%, #fed6e3 100%); border-radius:12px; padding:18px; text-align:center; }
     .stats h3{ margin:0 0 8px; }
@@ -39,7 +46,7 @@
     .total.pos{ color:var(--ok);} .total.neg{ color:var(--bad);} .total.zero{ color:var(--muted);}  
 
     .series{ border-left:4px solid var(--brand); margin:14px 0; }
-    .series .head{ display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e9edf2; padding-bottom:10px; }
+    .series .head{ display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #e9edf2; padding-bottom:10px; gap:8px; }
     .series .title{ font-weight:800; font-size:1.05rem; }
     .pill{ font-weight:800; padding:6px 10px; border-radius:999px; }
     .pill.pos{ background:rgba(86,171,47,.12); color:var(--ok);} 
@@ -48,11 +55,11 @@
 
     /* one-line report rows */
     details.row{ border-bottom:1px dashed #e9edf2; padding:8px 0; }
-    details.row summary{ list-style:none; display:flex; gap:8px; align-items:center; cursor:pointer; }
+    details.row summary{ list-style:none; display:flex; gap:8px; align-items:center; cursor:pointer; padding:10px 0; }
     details.row summary::-webkit-details-marker{ display:none; }
     .col-match{ flex:1 1 auto; min-width:0; }
     .truncate{ overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
-    .col-odds,.col-stake,.col-fib{ flex:0 0 auto; font-size:.9rem; color:#444; }
+    .col-odds,.col-stake,.col-fib{ flex:0 0 auto; font-size:.95rem; color:#444; }
     .badge-mini{ padding:2px 6px; border-radius:999px; font-weight:800; font-size:.75rem; }
     .badge-mini.win{ background:rgba(86,171,47,.15); color:var(--ok);} 
     .badge-mini.lose{ background:rgba(255,65,108,.15); color:var(--bad);} 
@@ -64,17 +71,19 @@
     .inline-two .field{ flex:1 1 50%; }
 
     /* top action row inside each series card */
-    .actions-top{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin:10px 0; }
+    .actions-top{ display:flex; justify-content:space-between; align-items:center; gap:10px; margin:10px 0; flex-wrap:wrap; }
     .actions-left{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     .actions-right{ display:flex; gap:8px; align-items:center; }
 
     /* scroll container for many rows */
     .rows.scroll{ max-height:420px; overflow-y:auto; border-top:1px solid #eef1f4; }
-      /* Fibonacci chips */
+
+    /* Fibonacci chips */
     .fib{ display:flex; flex-wrap:wrap; gap:8px; }
     .chip{ display:inline-block; background:#ecf2ff; border:1px solid #e1e5e9; border-radius:8px; padding:6px 10px; font-weight:700; position:relative; }
     .chip .i{ position:absolute; top:-6px; right:-6px; width:16px; height:16px; border-radius:50%; background:#333; color:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; }
-      /* Modal for random picks */
+
+    /* Modal */
     .modal{ position:fixed; inset:0; background:rgba(0,0,0,.4); display:flex; align-items:center; justify-content:center; padding:16px; z-index:50; }
     .modal.hidden{ display:none; }
     .modal-card{ background:#fff; width:min(520px,92vw); border-radius:14px; box-shadow:0 10px 24px rgba(0,0,0,.2); overflow:hidden; }
@@ -84,25 +93,38 @@
     .rand-list{ margin:0; padding-left:18px; line-height:1.8; font-size:1rem; }
     .close{ background:transparent; border:0; font-size:22px; cursor:pointer; }
     .btn-row{ display:flex; gap:10px; flex-wrap:wrap; }
+
+    /* ---- Mobile-first tweaks ---- */
+    @media (max-width:900px){
+      #nextBetCard{ position:sticky; top:8px; z-index:5; }
+    }
+    @media (max-width:600px){
+      .inline-two{ flex-direction:column; }
+      input[type="number"], select, input[type="text"]{ font-size:18px; padding:14px 14px; }
+      .btn{ font-size:16px; padding:14px 16px; }
+      .series .head{ flex-direction:column; align-items:flex-start; }
+      .col-odds,.col-stake,.col-fib{ font-size:1rem; }
+    }
   </style>
 </head>
 <body>
   <div class="container">
     <div class="header">
       <h1>🎯 Fibonacci Calculator</h1>
-      <p>Rule: lose → next index, win → step back 2 • Stake = (base × Fibonacci) ÷ net odds (rounded)</p>
+      <p>
+        Rule: lose → next index, win → step back <b>1</b> •
+        After any <b>win</b>: if <i>loss balance</i> &gt; <i>expected profit of next step</i>, then next stake = <b>ceil(loss ÷ net odds)</b> so that a <b>WW</b> returns to breakeven
+      </p>
     </div>
 
     <div class="main">
       <!-- LEFT: Overall + Next Bet + Series list -->
       <section>
         <div class="stats">
-          <!-- <h3>📈 Overall</h3> -->
           <div class="total" id="totalProfit">0</div>
-          <!-- <div>THB</div> -->
         </div>
 
-        <!-- Next Bet directly under Overall -->
+        <!-- Next Bet -->
         <div class="card" id="nextBetCard" style="margin-top:12px">
           <h2>🎮 Next Bet</h2>
           <div class="form-group">
@@ -137,12 +159,10 @@
       </section>
 
       <!-- RIGHT: (empty on desktop; reserved) -->
-      <section>
-        <!-- intentionally left empty -->
-      </section>
+      <section></section>
     </div>
 
-    <!-- BOTTOM: Series settings (less frequent) -->
+    <!-- BOTTOM: Series settings -->
     <section class="card" id="seriesSettingsSection" style="margin:0 16px 16px;">
       <h2>📊 Series Settings</h2>
       <div class="form-group">
@@ -159,6 +179,21 @@
         <button class="btn gray" onclick="resetAll()">🗑️ Reset All</button>
       </div>
     </section>
+  </div>
+
+  <!-- Modal -->
+  <div class="modal hidden" id="randomModal" role="dialog" aria-modal="true" aria-labelledby="randTitle">
+    <div class="modal-card">
+      <div class="modal-head">
+        <h3 id="randTitle">🎲 Random Picks</h3>
+        <button class="close" aria-label="Close" onclick="closeRandom()">×</button>
+      </div>
+      <div class="modal-body" id="randomResults"></div>
+      <div class="controls-row" style="padding:12px 16px;">
+        <button class="btn" onclick="doRandom()">🔀 Re-roll</button>
+        <button class="btn gray" onclick="closeRandom()">Close</button>
+      </div>
+    </div>
   </div>
 
   <script>
@@ -187,19 +222,46 @@
     const o = parseFloat(odds||0);
     return Math.max(0, o); // net odds only
   }
+  const roundBaht = (n)=> Math.round(n);
+  const ceilBaht  = (n)=> Math.ceil(n);
+
+  /**
+   * คำนวณเดิมพันตามกติกาใหม่:
+   * 1) baseStake = round( (base * Fibonacci(idx)) / netOdds )
+   * 2) หาก "เพิ่งชนะ" (winStreak ≥ 1) และ lossBalance > (baseStake * netOdds)
+   *    ⇒ ใช้เดิมพันถัดไป = ceil( lossBalance / netOdds ) เพื่อให้ชนะครั้งถัดไปคืนทุน (WW = breakeven)
+   *    (มิฉะนั้นใช้ baseStake)
+   */
   function calcStake(series, fibIndex, odds){
-    // stake = (base * Fibonacci(seq)) / netOdds + max(0, (lossBalance - base)/2)
     const net = getNetOdds(odds);
-    if(net <= 0) return { stake:0, target:0, netOdds:0 };
+    if(net <= 0) return { stake:0, target:0, netOdds:0, isAdjusted:false, defaultStake:0, expectedProfit:0, fibVal:1 };
+
     const idx = Math.min(fibIndex, gameData.fibSequence.length-1);
     const fibVal = gameData.fibSequence[idx];
     const base = series.minBet;
+
+    const baseStake = Math.max(1, roundBaht((base * fibVal) / net));
+    const expectedProfitBase = roundBaht(baseStake * net);
+
     const lossBal = Math.max(0, Number(series.lossBalance||0));
-    const basePart = (base * fibVal) / net;
-    const extra = lossBal > base ? (lossBal - base) / 2 : 0;
-    const raw = basePart + extra;
-    const stake = Math.max(1, Math.round(raw));
-    return { stake, target: base * fibVal, netOdds: net };
+    let stake = baseStake;
+    let isAdjusted = false;
+
+    // เงื่อนไข "หลังชนะ" เท่านั้น
+    if ((series.winStreak||0) >= 1 && lossBal > 0 && lossBal > expectedProfitBase){
+      stake = Math.max(1, ceilBaht(lossBal / net));
+      isAdjusted = true;
+    }
+
+    return {
+      stake,
+      defaultStake: baseStake,
+      isAdjusted,
+      expectedProfit: roundBaht(stake * net),
+      target: base * fibVal,
+      netOdds: net,
+      fibVal
+    };
   }
 
   // ====== CRUD ======
@@ -218,7 +280,6 @@
       lossBalance: 0,
       winStreak: 0
     };
-    // old -> new: append to end
     gameData.series.push(s);
     updateDisplay(); saveData();
   }
@@ -242,11 +303,10 @@
     const C = calcStake(series, series.currentFibIndex, odds);
     if(!C.netOdds){ alert('Invalid odds'); return; }
 
-    series.currentBetting = { matchName: name, odds, betAmount: C.stake, fibIndex: series.currentFibIndex };
+    series.currentBetting = { matchName: name, odds, betAmount: C.stake, fibIndex: series.currentFibIndex, isAdjusted: C.isAdjusted };
 
     document.getElementById('selectedSeries').value = '';
     document.getElementById('matchName').value = '';
-    // remember last odds
     gameData.lastOdds = isNaN(odds) ? 0.95 : odds; saveData();
     updateDisplay();
   }
@@ -255,23 +315,27 @@
     const s = gameData.series.find(x=>x.id===seriesId); if(!s || !s.currentBetting) return;
     if(typeof s.lossBalance !== 'number') s.lossBalance = 0;
     if(typeof s.winStreak !== 'number') s.winStreak = 0;
+
     const b = s.currentBetting; const netOdds = getNetOdds(b.odds);
-    const profitOnWin = Math.round(b.betAmount * netOdds);
+    const profitOnWin = roundBaht(b.betAmount * netOdds);
     const netProfit = isWin ? profitOnWin : -b.betAmount;
 
     if(isWin){
+      // กติกาเดินสเต็ป: ชนะถอย 1
       s.currentFibIndex = Math.max(0, s.currentFibIndex - 1);
       s.winStreak = (s.winStreak||0) + 1;
       s.lossBalance = Math.max(0, (s.lossBalance||0) - profitOnWin);
-      // two consecutive wins -> reset to index 0
+
+      // หากชนะติดกัน 2 ครั้ง ⇒ รีเซ็ตสเต็ปกลับ 0
       if(s.winStreak >= 2){ s.currentFibIndex = 0; s.winStreak = 0; }
     } else {
+      // แพ้ ⇒ ขยับไปสเต็ปถัดไป + เพิ่มขาดทุนสะสม
       s.currentFibIndex++;
       s.winStreak = 0;
       s.lossBalance = (s.lossBalance||0) + b.betAmount;
     }
 
-    const rec = { matchName: b.matchName, odds: b.odds, fibIndex: b.fibIndex, betAmount: b.betAmount, result: isWin? 'Win':'Lose' };
+    const rec = { matchName: b.matchName, odds: b.odds, fibIndex: b.fibIndex, betAmount: b.betAmount, result: isWin? 'Win':'Lose', adjusted: !!b.isAdjusted };
     s.games.push(rec); s.totalProfit += netProfit; s.currentBetting = null;
     updateDisplay(); saveData();
   }
@@ -327,14 +391,31 @@
     const sel = document.getElementById('selectedSeries');
     const oddsInput = document.getElementById('odds');
     const betSpan = document.getElementById('calculatedBet');
-    if(!sel || !oddsInput || !betSpan) return;
+    const betLines = document.getElementById('betLines');
+    if(!sel || !oddsInput || !betSpan || !betLines) return;
 
     function calc(){
       const sid = parseInt(sel.value);
       const s = gameData.series.find(x=>x.id===sid);
-      if(!s){ betSpan.textContent = '0'; return; }
-      const odds = parseFloat(oddsInput.value)||0.95; const C = calcStake(s, s.currentFibIndex, odds);
+      if(!s){
+        betSpan.textContent = '0';
+        betLines.innerHTML = `<div>💵 Stake: <b><span id="calculatedBet">0</span> ฿</b></div>`;
+        return;
+      }
+      const odds = parseFloat(oddsInput.value)||0.95;
+      const C = calcStake(s, s.currentFibIndex, odds);
       betSpan.textContent = (C.stake||0).toLocaleString();
+
+      const badge = C.isAdjusted ? `<span class="badge-mini win" style="margin-left:8px">Adjusted for recovery</span>` : '';
+      betLines.innerHTML = `
+        <div>💵 Stake: <b>${(C.stake||0).toLocaleString()} ฿</b> ${badge}</div>
+        <div style="font-size:.9rem;color:#666">
+          Fibo idx: <b>${s.currentFibIndex}</b> (×${C.fibVal}) • Default: ${C.defaultStake.toLocaleString()} ฿ • Net odds: ${odds}
+        </div>
+        <div style="font-size:.9rem;color:#666">
+          Expected profit if win: <b>${(C.expectedProfit||0).toLocaleString()} ฿</b> • Outstanding loss: <b>${(s.lossBalance||0).toLocaleString()} ฿</b>
+        </div>
+      `;
     }
     calc();
     sel.onchange = calc;
@@ -343,7 +424,7 @@
 
   function renderSeries(){
     const wrap = document.getElementById('seriesList'); if(!wrap) return; wrap.innerHTML='';
-    const list = gameData.series.slice().sort((a,b)=> a.id - b.id); // old -> new
+    const list = gameData.series.slice().sort((a,b)=> a.id - b.id);
     list.forEach(s=>{
       const div = document.createElement('div'); div.className='card series';
       const pc = s.totalProfit>0? 'pill pos': (s.totalProfit<0? 'pill neg':'pill zero');
@@ -380,13 +461,13 @@
       let rowCount = 0;
       if(s.currentBetting){
         const b = s.currentBetting; const mnShort = truncTitle(b.matchName);
-        const d = document.createElement('details'); d.className='row';
+        const d = document.createElement('details'); d.className='row'; d.open = false;
         d.innerHTML = `
           <summary>
             <span class="badge-mini wait">Betting</span>
             <span class="col-match truncate" title="${mnShort}">${mnShort}</span>
             <span class="col-odds">${b.odds}</span>
-            <span class="col-stake"><b>${b.betAmount.toLocaleString()}฿</b></span>
+            <span class="col-stake"><b>${b.betAmount.toLocaleString()}฿</b>${b.isAdjusted? ' <span class="badge-mini win">Adj</span>':''}</span>
             <span class="col-fib">(${b.fibIndex})</span>
           </summary>
           <div class="row-detail">${b.matchName}</div>
@@ -404,7 +485,7 @@
             <span class="badge-mini ${g.result==='Win'?'win':'lose'}">${g.result}</span>
             <span class="col-match truncate" title="${mnShort}">${mnShort}</span>
             <span class="col-odds">${g.odds}</span>
-            <span class="col-stake"><b>${g.betAmount.toLocaleString()}฿</b></span>
+            <span class="col-stake"><b>${g.betAmount.toLocaleString()}฿</b>${g.adjusted? ' <span class="badge-mini win">Adj</span>':''}</span>
             <span class="col-fib">(${g.fibIndex})</span>
           </summary>
           <div class="row-detail">${g.matchName}</div>
@@ -430,31 +511,7 @@
     const el = document.getElementById('randomResults');
     if(el){ el.innerHTML = `<ul class="rand-list"><li><b>Home/Away:</b> ${picks.sides}</li><li><b>Over/Under:</b> ${picks.ou}</li><li><b>Odd/Even:</b> ${picks.oe}</li></ul>`; }
   }
-  function openRandom(){
-    let m = document.getElementById('randomModal');
-    if(!m){
-      const div = document.createElement('div');
-      div.id = 'randomModal';
-      div.className = 'modal hidden';
-      div.setAttribute('role','dialog');
-      div.setAttribute('aria-modal','true');
-      div.setAttribute('aria-labelledby','randTitle');
-      div.innerHTML = `
-        <div class="modal-card">
-          <div class="modal-head">
-            <h3 id="randTitle">🎲 Random Picks</h3>
-            <button class="close" aria-label="Close" onclick="closeRandom()">×</button>
-          </div>
-          <div class="modal-body" id="randomResults"></div>
-          <div class="controls-row" style="padding:12px 16px;">
-            <button class="btn" onclick="doRandom()">🔀 Re-roll</button>
-            <button class="btn gray" onclick="closeRandom()">Close</button>
-          </div>
-        </div>`;
-      document.body.appendChild(div); m = div;
-    }
-    m.classList.remove('hidden'); rollAll();
-  }
+  function openRandom(){ const m = document.getElementById('randomModal'); if(!m) return; m.classList.remove('hidden');  }
   function closeRandom(){ const m = document.getElementById('randomModal'); if(!m) return; m.classList.add('hidden'); }
   function doRandom(){ rollAll(); }
 
