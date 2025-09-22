@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Fibonacci Calculator I</title>
+  <title>Fibonacci Calculator</title>
   <style>
     :root { --bg1:#667eea; --bg2:#764ba2; --brand:#4facfe; --brand2:#00f2fe; --ok:#56ab2f; --bad:#ff416c; --muted:#757f9a; }
     *{ box-sizing:border-box; }
@@ -18,7 +18,6 @@
     }
     .header{
       background:linear-gradient(135deg,var(--brand) 0%, var(--brand2) 100%); color:#fff; padding:18px 16px; text-align:center;
-      will-change:transform, opacity;
     }
     .header h1{ margin:0 0 6px; font-size:clamp(1.25rem,1.2rem + 1vw,2rem); text-shadow:0 1px 2px rgba(0,0,0,.25); }
     .header p{ margin:0; opacity:.95; font-size:.95rem; }
@@ -27,7 +26,22 @@
     @media (min-width:900px){ .main{ grid-template-columns: 1fr 360px; padding:24px; gap:24px; } }
 
     .card{ background:#fff; border-radius:14px; padding:16px; border:1px solid rgba(0,0,0,.06); box-shadow:0 4px 12px rgba(0,0,0,.06); }
-    .card h2{ margin:0 0 10px; font-size:1.1rem; border-bottom:2px solid var(--brand); padding-bottom:8px; }
+    .card h2{ margin:0; font-size:1.05rem; }
+
+    .nb-head{
+      display:flex; align-items:center; gap:10px; margin:0 0 10px;
+      border-bottom:2px solid var(--brand); padding-bottom:8px;
+    }
+    .nb-title{ font-weight:800; font-size:1.05rem; }
+    .nb-actions{ margin-left:auto; display:flex; gap:8px; }
+    .iconbtn{
+      width:36px; height:36px; display:inline-flex; align-items:center; justify-content:center;
+      border-radius:10px; border:1px solid #e5eaf0; background:#f7f9fc; color:#334155;
+      font-size:18px; cursor:pointer;
+      box-shadow:0 1px 2px rgba(0,0,0,.06);
+    }
+    .iconbtn.primary{ background:linear-gradient(135deg,var(--brand),var(--brand2)); color:#fff; border:none; }
+    .iconbtn:hover{ filter:brightness(1.05); }
 
     .form-group{ margin:12px 0; }
     .label{ display:block; font-size:.92rem; color:#444; margin-bottom:6px; font-weight:600; }
@@ -42,12 +56,6 @@
     .btn.bad{ background:linear-gradient(135deg,var(--bad), #ff6b6b); }
     .btn.gray{ background:linear-gradient(135deg,#757f9a,#d7dde8); }
     .btn.sm{ padding:8px 12px; font-weight:700; font-size:13px; border-radius:10px; }
-
-    /* ghost buttons (ไม่เด่น) */
-    .btn.ghost{ background:#fff; color:#495057; border:1px solid #e6e9ee; box-shadow:none; }
-    .btn.ghost:hover{ background:#f7f9fc; }
-    .btn.ghost.danger{ color:#b54d4d; border-color:#f1caca; }
-    .btn.ghost.danger:hover{ background:#fff4f4; }
 
     .stats{ background:linear-gradient(135deg,#a8edea 0%, #fed6e3 100%); border-radius:12px; padding:18px; text-align:center; }
     .total{ font-size:1.4rem; font-weight:800; }
@@ -94,56 +102,24 @@
     .close{ background:transparent; border:0; font-size:22px; cursor:pointer; }
     .btn-row{ display:flex; gap:10px; flex-wrap:wrap; }
 
-    /* ---- Mobile hide-on-scroll ---- */
-    @media (max-width:900px){
-      .scroll-hide { transition: transform .25s ease, opacity .25s ease; will-change: transform, opacity; }
-      .scroll-hide.hidden { transform: translateY(-110%); opacity: 0; pointer-events: none; }
-
-      .scroll-collapse { transition: max-height .3s ease, opacity .2s ease, margin .2s ease, padding .2s ease, border-width .2s ease, box-shadow .2s ease; overflow: hidden; }
-      .scroll-collapse.hidden { max-height: 0 !important; opacity: 0; margin: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; border-width: 0 !important; box-shadow: none !important; }
-
-      /* โหมด keyboard-safe: Bottom sheet */
-      body.kb #appHeader{ display:none !important; }
-      body.kb #nextBetCard{
-        position: fixed; left: 8px; right: 8px; bottom: env(safe-area-inset-bottom);
-        margin: 0; border-radius: 14px 14px 0 0; max-height: 70vh; overflow:auto; z-index: 100;
-        box-shadow:0 10px 24px rgba(0,0,0,.25);
-      }
-      body.kb .fab{ display:none !important; }
-    }
-
     @media (min-width:900px){ #seriesList{ margin-top: 8px; } }
     @media (max-width:600px){
       .inline-two{ flex-direction:column; }
       input[type="number"], select, input[type="text"]{ font-size:18px; padding:14px 14px; }
-      .btn{ font-size:16px; padding:14px 16px; }
       .series .head{ flex-direction:column; align-items:flex-start; }
       .col-odds,.col-stake,.col-fib{ font-size:1rem; }
     }
-
-    /* FAB */
-    .fab{
-      position:fixed; right:16px; bottom:16px; z-index:40;
-      background:linear-gradient(135deg,var(--brand),var(--brand2)); color:#fff; border:none; border-radius:999px;
-      padding:14px 18px; font-weight:800; box-shadow:0 6px 18px rgba(0,0,0,.25); cursor:pointer; display:none;
-    }
-    .fab.show{ display:inline-flex; align-items:center; gap:8px; }
 
     /* ปุ่มแถวบนของ Series */
     .actions-top{ display:flex; align-items:center; gap:10px; margin:10px 0; flex-wrap:wrap; }
     .actions-left{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
     .actions-right{ display:flex; gap:8px; align-items:center; margin-left:auto; }
     @media (min-width:600px){ .actions-top{ flex-wrap:nowrap; } }
-
-    /* ส่วนหัวของ Next Bet (มีปุ่ม Submit มุมขวาบน) */
-    .nb-head{ display:flex; align-items:center; gap:10px; margin-bottom:8px; }
-    .nb-actions{ margin-left:auto; display:flex; gap:8px; align-items:center; flex-wrap:wrap; }
-    .nb-title{ font-size:1.1rem; font-weight:800; border-bottom:2px solid var(--brand); padding-bottom:6px; }
   </style>
 </head>
 <body>
   <div class="container">
-    <div class="header scroll-hide" id="appHeader">
+    <div class="header" id="appHeader">
       <h1>🎯 Fibonacci Calculator</h1>
       <p>
         Rule: lose → next index, win → step back <b>1</b> •
@@ -158,16 +134,16 @@
         </div>
 
         <!-- Next Bet -->
-        <div class="card scroll-collapse" id="nextBetCard" style="margin-top:12px">
+        <div class="card" id="nextBetCard" style="margin-top:12px">
           <div class="nb-head">
             <div class="nb-title">🎮 Next Bet</div>
             <div class="nb-actions">
-              <button class="btn" id="bettingBtnTop">🎯 Submit</button>
-              <button class="btn gray" id="randomBtnTop">🎲 Random</button>
+              <button class="iconbtn" id="randomIconBtn" title="Random" aria-label="Random">🎲</button>
+              <button class="iconbtn primary" id="submitIconBtn" title="Submit" aria-label="Submit">🎯</button>
             </div>
           </div>
 
-          <!-- ORDER: Select Series -> Match name -> Odds -->
+          <!-- ORDER: Select Series → Match name → Odds -->
           <div class="inline-two">
             <div class="form-group field">
               <label class="label">Select Series</label>
@@ -185,7 +161,7 @@
 
           <div class="card" style="background:#f8f9fa">
             <div id="betLines" style="line-height:1.6">
-              <div>💵 Stake: <b><span id="calculatedBet">0</span> ฿</b></div>
+              <div>💵 Stake: <b><span id="calculatedBet">0.0</span> ฿</b></div>
             </div>
           </div>
         </div>
@@ -193,12 +169,13 @@
         <!-- Series list -->
         <div id="seriesList"></div>
       </section>
-      <section></section>
+
+      <section><!-- right column (reserved) --></section>
     </div>
 
     <!-- Series settings -->
     <section class="card" id="seriesSettingsSection" style="margin:0 16px 16px;">
-      <h2>📊 Series Settings</h2>
+      <h2 style="margin:0 0 10px; font-size:1.05rem; border-bottom:2px solid var(--brand); padding-bottom:8px;">📊 Series Settings</h2>
       <div class="form-group">
         <label class="label">Base unit (THB)</label>
         <input type="number" id="minBet" value="25" min="1" />
@@ -210,13 +187,10 @@
       </div>
       <div class="controls-row">
         <button class="btn" onclick="createNewSeries()">📝 New Series</button>
-        <button class="btn ghost" onclick="resetAll()">🗑️ Reset All</button>
+        <button class="btn gray" onclick="resetAll()">🗑️ Reset All</button>
       </div>
     </section>
   </div>
-
-  <!-- FAB -->
-  <button class="fab" id="fabShow"><span>📋</span> Next Bet</button>
 
   <!-- Random Modal -->
   <div class="modal hidden" id="randomModal" role="dialog" aria-modal="true" aria-labelledby="randTitle">
@@ -225,10 +199,10 @@
         <h3 id="randTitle">🎲 Random Picks</h3>
         <button class="close" aria-label="Close" onclick="closeRandom()">×</button>
       </div>
-      <div class="modal-body" id="randomResults"><!-- แสดง ? ครั้งแรก --></div>
+      <div class="modal-body" id="randomResults"><!-- ครั้งแรกจะเป็น ? --></div>
       <div class="controls-row" style="padding:12px 16px;">
         <button class="btn" onclick="doRandom()">🔀 Re-roll</button>
-        <button class="btn ghost" onclick="closeRandom()">Close</button>
+        <button class="btn gray" onclick="closeRandom()">Close</button>
       </div>
     </div>
   </div>
@@ -242,6 +216,12 @@
     series: []
   };
 
+  // ====== Helpers (1 ตำแหน่งทศนิยม) ======
+  const round1 = (n)=> Math.round(n*10)/10;
+  const ceil1  = (n)=> Math.ceil(n*10)/10;
+  const fmt1   = (n)=> (Number.isFinite(n)? n.toLocaleString(undefined,{minimumFractionDigits:1,maximumFractionDigits:1}) : '0.0');
+  function getNetOdds(odds){ const o = parseFloat(odds||0); return Math.max(0, o); }
+
   // ====== Persistence ======
   function loadData(){
     try{
@@ -254,12 +234,7 @@
   }
   function saveData(){ localStorage.setItem('fibonacciBettingNew', JSON.stringify(gameData)); }
 
-  // ====== Math helpers ======
-  const roundBaht = (n)=> Math.round(n);
-  const ceilBaht  = (n)=> Math.ceil(n);
-  function getNetOdds(odds){ const o = parseFloat(odds||0); return Math.max(0, o); }
-
-  // กติกา: หลัง Win ถ้า lossBalance > expectedProfit(สเต็ปถัดไป) => next stake = ceil(loss / netOdds)
+  // ====== Core math: stake with Fibonacci and recovery after a win ======
   function calcStake(series, fibIndex, odds){
     const net = getNetOdds(odds);
     if(net <= 0) return { stake:0, target:0, netOdds:0, isAdjusted:false, defaultStake:0, expectedProfit:0, fibVal:1 };
@@ -268,22 +243,24 @@
     const fibVal = gameData.fibSequence[idx];
     const base = series.minBet;
 
-    const baseStake = Math.max(1, roundBaht((base * fibVal) / net));
-    const expectedProfitBase = roundBaht(baseStake * net);
+    // Fibonacci stake = (base * F) / netOdds  (เช่น 25 * 1 / 0.85 = 29.4)
+    const baseStake = Math.max(0.1, round1((base * fibVal) / net));
+    const expectedProfitBase = round1(baseStake * net);
 
     const lossBal = Math.max(0, Number(series.lossBalance||0));
     let stake = baseStake;
     let isAdjusted = false;
 
+    // หลังชนะ: ถ้า loss ยังมากกว่า "กำไรคาดหวัง" ของสเต็ปถัดไป → ใช้ stake = ceil(loss / net) เพื่อมีโอกาส WW คืนทุน
     if ((series.winStreak||0) >= 1 && lossBal > 0 && lossBal > expectedProfitBase){
-      stake = Math.max(1, ceilBaht(lossBal / net));
+      stake = Math.max(0.1, ceil1(lossBal / net));
       isAdjusted = true;
     }
     return {
       stake,
       defaultStake: baseStake,
       isAdjusted,
-      expectedProfit: roundBaht(stake * net),
+      expectedProfit: round1(stake * net),
       target: base * fibVal,
       netOdds: net,
       fibVal
@@ -292,7 +269,7 @@
 
   // ====== CRUD ======
   function createNewSeries(){
-    const minBet = Math.max(1, parseInt(document.getElementById('minBet').value||'25'));
+    const minBet = Math.max(0.1, parseFloat(document.getElementById('minBet').value||'25'));
     gameData.minBet = minBet;
     const s = {
       id: Date.now(),
@@ -343,7 +320,7 @@
     if(typeof s.winStreak !== 'number') s.winStreak = 0;
 
     const b = s.currentBetting; const netOdds = getNetOdds(b.odds);
-    const profitOnWin = roundBaht(b.betAmount * netOdds);
+    const profitOnWin = round1(b.betAmount * netOdds);
     const netProfit = isWin ? profitOnWin : -b.betAmount;
 
     if(isWin){
@@ -354,11 +331,11 @@
     } else {
       s.currentFibIndex++;
       s.winStreak = 0;
-      s.lossBalance = (s.lossBalance||0) + b.betAmount;
+      s.lossBalance = round1((s.lossBalance||0) + b.betAmount);
     }
 
     const rec = { matchName: b.matchName, odds: b.odds, fibIndex: b.fibIndex, betAmount: b.betAmount, result: isWin? 'Win':'Lose', adjusted: !!b.isAdjusted };
-    s.games.push(rec); s.totalProfit += netProfit; s.currentBetting = null;
+    s.games.push(rec); s.totalProfit = round1(s.totalProfit + netProfit); s.currentBetting = null;
     updateDisplay(); saveData();
   }
 
@@ -386,6 +363,7 @@
   }
 
   function updateDisplay(){
+    // Fibonacci chips
     const fc = document.getElementById('fibSequence');
     if(fc){
       fc.innerHTML='';
@@ -394,6 +372,7 @@
       });
     }
 
+    // series selector
     const sel = document.getElementById('selectedSeries');
     if(sel){
       sel.innerHTML='<option value="">— Choose —</option>';
@@ -418,22 +397,22 @@
       const sid = parseInt(sel.value);
       const s = gameData.series.find(x=>x.id===sid);
       if(!s){
-        betSpan.textContent = '0';
-        betLines.innerHTML = `<div>💵 Stake: <b><span id="calculatedBet">0</span> ฿</b></div>`;
+        betSpan.textContent = '0.0';
+        betLines.innerHTML = `<div>💵 Stake: <b><span id="calculatedBet">0.0</span> ฿</b></div>`;
         return;
       }
       const odds = parseFloat(oddsInput.value)||0.85;
       const C = calcStake(s, s.currentFibIndex, odds);
-      betSpan.textContent = (C.stake||0).toLocaleString();
+      betSpan.textContent = fmt1(C.stake);
 
       const badge = C.isAdjusted ? `<span class="badge-mini win" style="margin-left:8px">Adjusted for recovery</span>` : '';
       betLines.innerHTML = `
-        <div>💵 Stake: <b>${(C.stake||0).toLocaleString()} ฿</b> ${badge}</div>
+        <div>💵 Stake: <b>${fmt1(C.stake)} ฿</b> ${badge}</div>
         <div style="font-size:.9rem;color:#666">
-          Fibo idx: <b>${s.currentFibIndex}</b> (×${C.fibVal}) • Default: ${C.defaultStake.toLocaleString()} ฿ • Net odds: ${odds}
+          Fibo idx: <b>${s.currentFibIndex}</b> (×${C.fibVal}) • Default: ${fmt1(C.defaultStake)} ฿ • Net odds: ${odds}
         </div>
         <div style="font-size:.9rem;color:#666">
-          Expected profit if win: <b>${(C.expectedProfit||0).toLocaleString()} ฿</b> • Outstanding loss: <b>${(s.lossBalance||0).toLocaleString()} ฿</b>
+          Expected profit if win: <b>${fmt1(C.expectedProfit)} ฿</b> • Outstanding loss: <b>${fmt1(s.lossBalance||0)} ฿</b>
         </div>
       `;
     }
@@ -451,7 +430,7 @@
       div.innerHTML = `
         <div class="head">
           <div class="title">${s.name}</div>
-          <div class="${pc}">${s.totalProfit>0?'+':''}${s.totalProfit.toLocaleString()} ฿</div>
+          <div class="${pc}">${s.totalProfit>0?'+':''}${fmt1(s.totalProfit)} ฿</div>
         </div>
       `;
 
@@ -464,8 +443,8 @@
         const btnL = document.createElement('button'); btnL.className = 'btn bad'; btnL.textContent = '❌ Lose'; btnL.onclick = function(){ recordResult(s.id, false); };
         left.appendChild(btnW); left.appendChild(btnL);
       }
-      const btnC = document.createElement('button'); btnC.className = 'btn sm ghost'; btnC.textContent = 'Close'; btnC.onclick = function(){ completeSeries(s.id); };
-      const btnD = document.createElement('button'); btnD.className = 'btn sm ghost danger'; btnD.textContent = 'Delete'; btnD.onclick = function(){ deleteSeries(s.id); };
+      const btnC = document.createElement('button'); btnC.className = 'btn sm gray'; btnC.textContent = 'Close'; btnC.onclick = function(){ completeSeries(s.id); };
+      const btnD = document.createElement('button'); btnD.className = 'btn sm bad'; btnD.style.filter = 'none'; btnD.textContent = 'Delete'; btnD.onclick = function(){ deleteSeries(s.id); };
       right.appendChild(btnC); right.appendChild(btnD);
 
       actionsTop.appendChild(left); actionsTop.appendChild(right); div.appendChild(actionsTop);
@@ -483,7 +462,7 @@
             <span class="badge-mini wait">Betting</span>
             <span class="col-match truncate" title="${mnShort}">${mnShort}</span>
             <span class="col-odds">${b.odds}</span>
-            <span class="col-stake"><b>${b.betAmount.toLocaleString()}฿</b>${b.isAdjusted? ' <span class="badge-mini win">Adj</span>':''}</span>
+            <span class="col-stake"><b>${fmt1(b.betAmount)}฿</b>${b.isAdjusted? ' <span class="badge-mini win">Adj</span>':''}</span>
             <span class="col-fib">(${b.fibIndex})</span>
           </summary>
           <div class="row-detail">${b.matchName}</div>
@@ -500,7 +479,7 @@
             <span class="badge-mini ${g.result==='Win'?'win':'lose'}">${g.result}</span>
             <span class="col-match truncate" title="${mnShort}">${mnShort}</span>
             <span class="col-odds">${g.odds}</span>
-            <span class="col-stake"><b>${g.betAmount.toLocaleString()}฿</b>${g.adjusted? ' <span class="badge-mini win">Adj</span>':''}</span>
+            <span class="col-stake"><b>${fmt1(g.betAmount)}฿</b>${g.adjusted? ' <span class="badge-mini win">Adj</span>':''}</span>
             <span class="col-fib">(${g.fibIndex})</span>
           </summary>
           <div class="row-detail">${g.matchName}</div>
@@ -515,8 +494,9 @@
   function renderTotals(){
     const total = gameData.series.reduce((a,s)=> a + s.totalProfit, 0);
     const el = document.getElementById('totalProfit'); if(!el) return;
-    el.textContent = (total>0?'+':'') + total.toLocaleString();
-    el.className = 'total ' + (total>0? 'pos' : (total<0? 'neg':'zero'));
+    const cls = total>0? 'pos' : (total<0? 'neg':'zero');
+    el.className = 'total ' + cls;
+    el.textContent = (total>0?'+':'') + fmt1(total);
   }
 
   // ====== Random popup ======
@@ -531,120 +511,26 @@
     m.classList.remove('hidden');
     const el = document.getElementById('randomResults');
     if (el && !el.innerHTML.trim()) {
-      // ครั้งแรกแสดง ? รอการ Re-roll
+      // ครั้งแรก: แสดง ? รอ Re-roll
       el.innerHTML = `<ul class="rand-list"><li><b>Home/Away:</b> ?</li><li><b>Over/Under:</b> ?</li><li><b>Odd/Even:</b> ?</li></ul>`;
     }
   }
   function closeRandom(){ const m = document.getElementById('randomModal'); if(!m) return; m.classList.add('hidden'); }
   function doRandom(){ rollAll(); }
 
-  // ====== Hide-on-scroll + FAB + Keyboard-safe ======
-  (function initUI(){
-    const header = document.getElementById('appHeader');
-    const nextBet = document.getElementById('nextBetCard');
-    const fab = document.getElementById('fabShow');
-    const submitTop = document.getElementById('bettingBtnTop');
-    const randomTop = document.getElementById('randomBtnTop');
-    if(!header || !nextBet || !fab) return;
-
-    // map ปุ่มบนให้เรียกฟังก์ชันเดิม
-    submitTop.addEventListener('click', startBetting);
-    randomTop.addEventListener('click', openRandom);
-
-    const mql = window.matchMedia('(max-width: 900px)');
-    let lastY = window.scrollY || 0;
-    let ticking = false;
-    let lockUI = false;
-    let lockTimer = null;
-    const THRESH = 12;
-
-    function updateFab(){
-      if(mql.matches && nextBet.classList.contains('hidden') && !document.body.classList.contains('kb')) fab.classList.add('show');
-      else fab.classList.remove('show');
-    }
-
-    function onScroll(){
-      if(ticking) return;
-      ticking = true;
-      window.requestAnimationFrame(()=>{
-        const y = window.scrollY || 0;
-        const dy = y - lastY;
-
-        if(mql.matches){
-          if(!lockUI){
-            if(dy > THRESH){ header.classList.add('hidden'); nextBet.classList.add('hidden'); }
-            else if(dy < -THRESH){ header.classList.remove('hidden'); nextBet.classList.remove('hidden'); }
-            updateFab();
-          }else{
-            header.classList.add('hidden'); nextBet.classList.remove('hidden');
-          }
-        }else{
-          header.classList.remove('hidden'); nextBet.classList.remove('hidden');
-          updateFab();
-        }
-
-        lastY = y; ticking = false;
-      });
-    }
-
-    // แตะภายในการ์ด -> ล็อกไม่ให้หายชั่วคราว (ไว้กด Submit)
-    nextBet.addEventListener('pointerdown', ()=>{
-      lockUI = true;
-      if(lockTimer) clearTimeout(lockTimer);
-      lockTimer = setTimeout(()=>{ lockUI = false; }, 1200);
-    });
-
-    // FAB
-    fab.addEventListener('click', ()=>{
-      nextBet.classList.remove('hidden');
-      header.classList.remove('hidden');
-      updateFab();
-      window.scrollTo({top: Math.max(0, window.scrollY - 80), behavior:'smooth'});
-    });
-
-    // Keyboard-safe: focus/blur
-    const inputs = nextBet.querySelectorAll('input,select,textarea');
-    inputs.forEach(el=>{
-      el.addEventListener('focus', ()=>{
-        document.body.classList.add('kb');
-        lockUI = true;
-        header.classList.add('hidden');
-        nextBet.classList.remove('hidden');
-        updateFab();
-        setTimeout(()=>{ try{ el.scrollIntoView({block:'center', behavior:'smooth'}); }catch(e){} }, 60);
-      });
-      el.addEventListener('blur', ()=>{
-        setTimeout(()=>{
-          const active = document.activeElement;
-          if(!nextBet.contains(active)){
-            document.body.classList.remove('kb');
-            lockUI = false;
-            updateFab();
-          }
-        }, 80);
-      });
-    });
-
-    // bind classes
-    header.classList.add('scroll-hide');
-    nextBet.classList.add('scroll-collapse');
-
-    window.addEventListener('scroll', onScroll, {passive:true});
-    window.addEventListener('resize', ()=>{
-      if(!mql.matches){ header.classList.remove('hidden'); nextBet.classList.remove('hidden'); document.body.classList.remove('kb'); }
-      updateFab();
-    });
-    updateFab();
-  })();
-
   // ====== Init ======
   document.addEventListener('DOMContentLoaded', function(){
     loadData();
+    // icon button bindings
+    document.getElementById('submitIconBtn').addEventListener('click', startBetting);
+    document.getElementById('randomIconBtn').addEventListener('click', openRandom);
+
+    // settings change
     const mb = document.getElementById('minBet');
-    if(mb){ mb.addEventListener('change', function(){ gameData.minBet = Math.max(1, parseInt(this.value||'25')); updateDisplay(); saveData(); }); }
+    if(mb){ mb.addEventListener('change', function(){ gameData.minBet = Math.max(0.1, parseFloat(this.value||'25')); updateDisplay(); saveData(); }); }
   });
 
-  // expose
+  // expose (for inline handlers in rows & modal)
   window.createNewSeries = createNewSeries;
   window.resetAll = resetAll;
   window.startBetting = startBetting;
