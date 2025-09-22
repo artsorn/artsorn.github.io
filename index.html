@@ -12,7 +12,10 @@
       margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,"Helvetica Neue",Arial;
       background:linear-gradient(135deg,var(--bg1) 0%, var(--bg2) 100%); padding:10px;
     }
-    .container{ width:min(1400px,96vw); margin:0 auto; background:rgba(255,255,255,.96); border-radius:16px; overflow:clip; box-shadow:0 10px 24px rgba(0,0,0,.12); }
+    .container{
+      width:min(1400px,96vw); margin:0 auto; background:rgba(255,255,255,.96);
+      border-radius:16px; /* overflow:clip; <-- เอาออกเพื่อไม่ให้ตัดเนื้อหาเวลาเลื่อน */ box-shadow:0 10px 24px rgba(0,0,0,.12);
+    }
     .header{
       background:linear-gradient(135deg,var(--brand) 0%, var(--brand2) 100%); color:#fff; padding:18px 16px; text-align:center;
       will-change:transform, opacity;
@@ -42,7 +45,6 @@
     .btn.sm{ padding:8px 12px; font-weight:700; font-size:13px; border-radius:10px; }
 
     .stats{ background:linear-gradient(135deg,#a8edea 0%, #fed6e3 100%); border-radius:12px; padding:18px; text-align:center; }
-    .stats h3{ margin:0 0 8px; }
     .total{ font-size:1.4rem; font-weight:800; }
     .total.pos{ color:var(--ok);} .total.neg{ color:var(--bad);} .total.zero{ color:var(--muted);}  
 
@@ -54,7 +56,6 @@
     .pill.neg{ background:rgba(255,65,108,.12); color:var(--bad);} 
     .pill.zero{ background:rgba(117,127,154,.12); color:var(--muted);} 
 
-    /* one-line report rows */
     details.row{ border-bottom:1px dashed #e9edf2; padding:8px 0; }
     details.row summary{ list-style:none; display:flex; gap:8px; align-items:center; cursor:pointer; padding:10px 0; }
     details.row summary::-webkit-details-marker{ display:none; }
@@ -71,10 +72,8 @@
     .inline-two{ display:flex; gap:10px; }
     .inline-two .field{ flex:1 1 50%; }
 
-    /* scroll container for many rows */
     .rows.scroll{ max-height:420px; overflow-y:auto; border-top:1px solid #eef1f4; }
 
-    /* Fibonacci chips */
     .fib{ display:flex; flex-wrap:wrap; gap:8px; }
     .chip{ display:inline-block; background:#ecf2ff; border:1px solid #e1e5e9; border-radius:8px; padding:6px 10px; font-weight:700; position:relative; }
     .chip .i{ position:absolute; top:-6px; right:-6px; width:16px; height:16px; border-radius:50%; background:#333; color:#fff; display:flex; align-items:center; justify-content:center; font-size:10px; }
@@ -90,8 +89,7 @@
     .close{ background:transparent; border:0; font-size:22px; cursor:pointer; }
     .btn-row{ display:flex; gap:10px; flex-wrap:wrap; }
 
-    /* ---- Mobile-first tweaks ---- */
-    /* ซ่อน/หุบเมื่อเลื่อนบนมือถือ */
+    /* ---- Mobile-first hide-on-scroll ---- */
     @media (max-width:900px){
       .scroll-hide { transition: transform .25s ease, opacity .25s ease; will-change: transform, opacity; }
       .scroll-hide.hidden { transform: translateY(-110%); opacity: 0; pointer-events: none; }
@@ -100,9 +98,8 @@
       .scroll-collapse.hidden { max-height: 0 !important; opacity: 0; margin: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; border-width: 0 !important; box-shadow: none !important; }
     }
 
-    /* ทำให้ Next Bet sticky เฉพาะจอใหญ่ */
+    /* เดสก์ท็อป: ไม่ sticky ใด ๆ ทั้งสิ้น เพื่อไม่ให้ทับ */
     @media (min-width:900px){
-      #nextBetCard{ position: sticky; top: 8px; z-index: 1; }
       #seriesList{ margin-top: 8px; }
     }
 
@@ -113,6 +110,14 @@
       .series .head{ flex-direction:column; align-items:flex-start; }
       .col-odds,.col-stake,.col-fib{ font-size:1rem; }
     }
+
+    /* FAB ปุ่มเรียก Next Bet */
+    .fab{
+      position:fixed; right:16px; bottom:16px; z-index:40;
+      background:linear-gradient(135deg,var(--brand),var(--brand2)); color:#fff; border:none; border-radius:999px;
+      padding:14px 18px; font-weight:800; box-shadow:0 6px 18px rgba(0,0,0,.25); cursor:pointer; display:none;
+    }
+    .fab.show{ display:inline-flex; align-items:center; gap:8px; }
   </style>
 </head>
 <body>
@@ -132,7 +137,7 @@
           <div class="total" id="totalProfit">0</div>
         </div>
 
-        <!-- Next Bet -->
+        <!-- Next Bet (ไม่ sticky, หุบ/โชว์อัตโนมัติ + ปุ่ม FAB) -->
         <div class="card scroll-collapse" id="nextBetCard" style="margin-top:12px">
           <h2>🎮 Next Bet</h2>
           <div class="form-group">
@@ -146,7 +151,7 @@
             </div>
             <div class="form-group field">
               <label class="label">Odds value</label>
-              <input type="number" id="odds" value="0.95" step="0.01" min="0.01" max="100" />
+              <input type="number" id="odds" value="0.85" step="0.01" min="0.01" max="100" />
             </div>
           </div>
 
@@ -156,7 +161,7 @@
             </div>
           </div>
 
-          <div class="btn-row">
+          <div class="controls-row">
             <button class="btn" id="bettingBtn" onclick="startBetting()">🎯 Submit</button>
             <button class="btn gray" id="randomBtn" onclick="openRandom()">🎲 Random</button>
           </div>
@@ -189,6 +194,9 @@
     </section>
   </div>
 
+  <!-- FAB -->
+  <button class="fab" id="fabShow"><span>📋</span> Next Bet</button>
+
   <!-- Modal -->
   <div class="modal hidden" id="randomModal" role="dialog" aria-modal="true" aria-labelledby="randTitle">
     <div class="modal-card">
@@ -197,7 +205,7 @@
         <button class="close" aria-label="Close" onclick="closeRandom()">×</button>
       </div>
       <div class="modal-body" id="randomResults">
-        <!-- เปิด Random ครั้งแรก: ยังไม่สุ่มใหม่จนกด Re-roll -->
+        <!-- ไม่สุ่มใหม่ตอนเปิด -->
       </div>
       <div class="controls-row" style="padding:12px 16px;">
         <button class="btn" onclick="doRandom()">🔀 Re-roll</button>
@@ -210,7 +218,7 @@
   // ====== State ======
   let gameData = {
     minBet: 25,
-    lastOdds: 0.95,
+    lastOdds: 0.85,
     fibSequence: [1,1,2,3,5,8,13,21,34,55,89,144],
     series: []
   };
@@ -222,27 +230,17 @@
       gameData = { ...gameData, ...saved };
     }catch(e){}
     const oddsInput = document.getElementById('odds');
-    if(oddsInput){ oddsInput.value = String(gameData.lastOdds ?? 0.95); }
+    if(oddsInput){ oddsInput.value = String(gameData.lastOdds ?? 0.85); }
     updateDisplay();
   }
   function saveData(){ localStorage.setItem('fibonacciBettingNew', JSON.stringify(gameData)); }
 
   // ====== Math helpers ======
-  function getNetOdds(odds){
-    const o = parseFloat(odds||0);
-    return Math.max(0, o); // net odds only
-    // ถ้าต้องรองรับค่าน้ำแบบ +/− หรือฮ่องกง ฯลฯ ค่อยแปลงเพิ่มเติมที่นี่
-  }
+  function getNetOdds(odds){ const o = parseFloat(odds||0); return Math.max(0, o); }
   const roundBaht = (n)=> Math.round(n);
   const ceilBaht  = (n)=> Math.ceil(n);
 
-  /**
-   * คำนวณเดิมพันตามกติกาใหม่:
-   * 1) baseStake = round( (base * Fibonacci(idx)) / netOdds )
-   * 2) หาก "เพิ่งชนะ" (winStreak ≥ 1) และ lossBalance > (baseStake * netOdds)
-   *    ⇒ ใช้เดิมพันถัดไป = ceil( lossBalance / netOdds ) เพื่อให้ชนะครั้งถัดไปคืนทุน (WW = breakeven)
-   *    (มิฉะนั้นใช้ baseStake)
-   */
+  // กติกาใหม่: หลัง Win ถ้า lossBalance > expectedProfit ของสเต็ปถัดไป -> next stake = ceil(loss / netOdds)
   function calcStake(series, fibIndex, odds){
     const net = getNetOdds(odds);
     if(net <= 0) return { stake:0, target:0, netOdds:0, isAdjusted:false, defaultStake:0, expectedProfit:0, fibVal:1 };
@@ -258,12 +256,10 @@
     let stake = baseStake;
     let isAdjusted = false;
 
-    // เงื่อนไข "หลังชนะ" เท่านั้น
     if ((series.winStreak||0) >= 1 && lossBal > 0 && lossBal > expectedProfitBase){
       stake = Math.max(1, ceilBaht(lossBal / net));
       isAdjusted = true;
     }
-
     return {
       stake,
       defaultStake: baseStake,
@@ -296,7 +292,7 @@
   }
   function resetAll(){
     if(!confirm('Reset all data?')) return;
-    gameData = { minBet:25, lastOdds:0.95, fibSequence:[1,1,2,3,5,8,13,21,34,55,89,144], series:[] };
+    gameData = { minBet:25, lastOdds:0.85, fibSequence:[1,1,2,3,5,8,13,21,34,55,89,144], series:[] };
     updateDisplay(); saveData();
   }
 
@@ -318,7 +314,7 @@
 
     document.getElementById('selectedSeries').value = '';
     document.getElementById('matchName').value = '';
-    gameData.lastOdds = isNaN(odds) ? 0.95 : odds; saveData();
+    gameData.lastOdds = isNaN(odds) ? 0.85 : odds; saveData();
     updateDisplay();
   }
 
@@ -332,15 +328,12 @@
     const netProfit = isWin ? profitOnWin : -b.betAmount;
 
     if(isWin){
-      // กติกาเดินสเต็ป: ชนะถอย 1
       s.currentFibIndex = Math.max(0, s.currentFibIndex - 1);
       s.winStreak = (s.winStreak||0) + 1;
       s.lossBalance = Math.max(0, (s.lossBalance||0) - profitOnWin);
 
-      // หากชนะติดกัน 2 ครั้ง ⇒ รีเซ็ตสเต็ปกลับ 0
       if(s.winStreak >= 2){ s.currentFibIndex = 0; s.winStreak = 0; }
     } else {
-      // แพ้ ⇒ ขยับไปสเต็ปถัดไป + เพิ่มขาดทุนสะสม
       s.currentFibIndex++;
       s.winStreak = 0;
       s.lossBalance = (s.lossBalance||0) + b.betAmount;
@@ -413,7 +406,7 @@
         betLines.innerHTML = `<div>💵 Stake: <b><span id="calculatedBet">0</span> ฿</b></div>`;
         return;
       }
-      const odds = parseFloat(oddsInput.value)||0.95;
+      const odds = parseFloat(oddsInput.value)||0.85;
       const C = calcStake(s, s.currentFibIndex, odds);
       betSpan.textContent = (C.stake||0).toLocaleString();
 
@@ -430,7 +423,7 @@
     }
     calc();
     sel.onchange = calc;
-    oddsInput.oninput = function(){ gameData.lastOdds = parseFloat(this.value||'0.95')||0.95; saveData(); calc(); };
+    oddsInput.oninput = function(){ gameData.lastOdds = parseFloat(this.value||'0.85')||0.85; saveData(); calc(); };
   }
 
   function renderSeries(){
@@ -439,7 +432,6 @@
     list.forEach(s=>{
       const div = document.createElement('div'); div.className='card series';
       const pc = s.totalProfit>0? 'pill pos': (s.totalProfit<0? 'pill neg':'pill zero');
-      // header
       div.innerHTML = `
         <div class="head">
           <div class="title">${s.name}</div>
@@ -447,7 +439,6 @@
         </div>
       `;
 
-      // actions on top
       const actionsTop = document.createElement('div'); actionsTop.className = 'actions-top';
       const left = document.createElement('div'); left.className = 'actions-left';
       const right = document.createElement('div'); right.className = 'actions-right';
@@ -463,12 +454,10 @@
 
       actionsTop.appendChild(left); actionsTop.appendChild(right); div.appendChild(actionsTop);
 
-      // rows container
       const rows = document.createElement('div'); rows.id = `rows-${s.id}`; rows.className = 'rows';
       div.appendChild(rows);
       wrap.appendChild(div);
 
-      // current betting row — first
       let rowCount = 0;
       if(s.currentBetting){
         const b = s.currentBetting; const mnShort = truncTitle(b.matchName);
@@ -486,7 +475,6 @@
         rows.appendChild(d); rowCount++;
       }
 
-      // finished games — newest first
       const games = s.games.slice().reverse();
       games.forEach(function(g){
         const mnShort = truncTitle(g.matchName);
@@ -523,30 +511,31 @@
     if(el){ el.innerHTML = `<ul class="rand-list"><li><b>Home/Away:</b> ${picks.sides}</li><li><b>Over/Under:</b> ${picks.ou}</li><li><b>Odd/Even:</b> ${picks.oe}</li></ul>`; }
   }
   function openRandom(){
-    const m = document.getElementById('randomModal');
-    if (!m) return;
+    const m = document.getElementById('randomModal'); if (!m) return;
     m.classList.remove('hidden');
-
-    // ถ้ายังไม่เคยสุ่มมาก่อนให้แสดงคำแนะนำไว้เฉย ๆ
     const el = document.getElementById('randomResults');
-    if (el && !el.innerHTML.trim()) {
-      el.innerHTML = `<p style="margin:0">กด <b>Re-roll</b> เพื่อสุ่มตัวเลือก</p>`;
-    }
-    // ไม่สุ่มใหม่ตรงนี้ เพื่อจำค่าครั้งก่อน
+    if (el && !el.innerHTML.trim()) { el.innerHTML = `<p style="margin:0">กด <b>Re-roll</b> เพื่อสุ่มตัวเลือก</p>`; }
   }
   function closeRandom(){ const m = document.getElementById('randomModal'); if(!m) return; m.classList.add('hidden'); }
   function doRandom(){ rollAll(); }
 
-  // ====== Hide-on-scroll (mobile only) ======
+  // ====== Hide-on-scroll + FAB ======
   (function initHideOnScroll(){
     const header = document.getElementById('appHeader');
     const nextBet = document.getElementById('nextBetCard');
-    if(!header || !nextBet) return;
+    const fab = document.getElementById('fabShow');
+    if(!header || !nextBet || !fab) return;
 
     const mql = window.matchMedia('(max-width: 900px)');
     let lastY = window.scrollY || 0;
     let ticking = false;
     const THRESH = 12;
+
+    function updateFab(){
+      // โชว์ FAB เมื่อ Next Bet ถูกหุบ และอยู่ในจอเล็กเท่านั้น
+      if(mql.matches && nextBet.classList.contains('hidden')) fab.classList.add('show');
+      else fab.classList.remove('show');
+    }
 
     function onScroll(){
       if(ticking) return;
@@ -565,10 +554,11 @@
             header.classList.remove('hidden');
             nextBet.classList.remove('hidden');
           }
+          updateFab();
         }else{
-          // desktop: ensure visible
           header.classList.remove('hidden');
           nextBet.classList.remove('hidden');
+          updateFab();
         }
 
         lastY = y;
@@ -576,18 +566,29 @@
       });
     }
 
-    // bind classes for animation
+    // ปุ่ม FAB เรียก Next Bet
+    fab.addEventListener('click', ()=>{
+      nextBet.classList.remove('hidden');
+      header.classList.remove('hidden');
+      updateFab();
+      // เลื่อนกลับขึ้นเล็กน้อยให้เห็นการ์ด
+      window.scrollTo({top: Math.max(0, window.scrollY - 80), behavior:'smooth'});
+    });
+
+    // bind classes
     header.classList.add('scroll-hide');
     nextBet.classList.add('scroll-collapse');
 
     window.addEventListener('scroll', onScroll, {passive:true});
     window.addEventListener('resize', ()=>{
-      // reset visibility when switching breakpoints
+      // reset เมื่อสลับ breakpoint
       if(!mql.matches){
         header.classList.remove('hidden');
         nextBet.classList.remove('hidden');
       }
+      updateFab();
     });
+    updateFab();
   })();
 
   // ====== Init ======
