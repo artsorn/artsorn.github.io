@@ -14,7 +14,7 @@
     }
     .container{
       width:min(1400px,96vw); margin:0 auto; background:rgba(255,255,255,.96);
-      border-radius:16px; /* overflow:clip; <-- เอาออกเพื่อไม่ให้ตัดเนื้อหาเวลาเลื่อน */ box-shadow:0 10px 24px rgba(0,0,0,.12);
+      border-radius:16px; box-shadow:0 10px 24px rgba(0,0,0,.12);
     }
     .header{
       background:linear-gradient(135deg,var(--brand) 0%, var(--brand2) 100%); color:#fff; padding:18px 16px; text-align:center;
@@ -43,6 +43,14 @@
     .btn.bad{ background:linear-gradient(135deg,var(--bad), #ff6b6b); }
     .btn.gray{ background:linear-gradient(135deg,#757f9a,#d7dde8); }
     .btn.sm{ padding:8px 12px; font-weight:700; font-size:13px; border-radius:10px; }
+
+    /* ghost buttons (ไม่เด่น) */
+    .btn.ghost{
+      background:#fff; color:#495057; border:1px solid #e6e9ee; box-shadow:none;
+    }
+    .btn.ghost:hover{ background:#f7f9fc; }
+    .btn.ghost.danger{ color:#b54d4d; border-color:#f1caca; }
+    .btn.ghost.danger:hover{ background:#fff4f4; }
 
     .stats{ background:linear-gradient(135deg,#a8edea 0%, #fed6e3 100%); border-radius:12px; padding:18px; text-align:center; }
     .total{ font-size:1.4rem; font-weight:800; }
@@ -89,16 +97,25 @@
     .close{ background:transparent; border:0; font-size:22px; cursor:pointer; }
     .btn-row{ display:flex; gap:10px; flex-wrap:wrap; }
 
-    /* ---- Mobile-first hide-on-scroll ---- */
+    /* ---- Mobile hide-on-scroll ---- */
     @media (max-width:900px){
       .scroll-hide { transition: transform .25s ease, opacity .25s ease; will-change: transform, opacity; }
       .scroll-hide.hidden { transform: translateY(-110%); opacity: 0; pointer-events: none; }
 
       .scroll-collapse { transition: max-height .3s ease, opacity .2s ease, margin .2s ease, padding .2s ease, border-width .2s ease, box-shadow .2s ease; overflow: hidden; }
       .scroll-collapse.hidden { max-height: 0 !important; opacity: 0; margin: 0 !important; padding-top: 0 !important; padding-bottom: 0 !important; border-width: 0 !important; box-shadow: none !important; }
+
+      /* โหมด keyboard-safe: ทำ Next Bet เป็น bottom sheet */
+      body.kb #appHeader{ display:none !important; }
+      body.kb #nextBetCard{
+        position: fixed; left: 8px; right: 8px; bottom: env(safe-area-inset-bottom);
+        margin: 0; border-radius: 14px 14px 0 0; max-height: 70vh; overflow:auto; z-index: 100;
+        box-shadow:0 10px 24px rgba(0,0,0,.25);
+      }
+      body.kb .fab{ display:none !important; }
     }
 
-    /* เดสก์ท็อป: ไม่ sticky ใด ๆ ทั้งสิ้น เพื่อไม่ให้ทับ */
+    /* เดสก์ท็อป */
     @media (min-width:900px){
       #seriesList{ margin-top: 8px; }
     }
@@ -111,13 +128,19 @@
       .col-odds,.col-stake,.col-fib{ font-size:1rem; }
     }
 
-    /* FAB ปุ่มเรียก Next Bet */
+    /* FAB */
     .fab{
       position:fixed; right:16px; bottom:16px; z-index:40;
       background:linear-gradient(135deg,var(--brand),var(--brand2)); color:#fff; border:none; border-radius:999px;
       padding:14px 18px; font-weight:800; box-shadow:0 6px 18px rgba(0,0,0,.25); cursor:pointer; display:none;
     }
     .fab.show{ display:inline-flex; align-items:center; gap:8px; }
+
+    /* ปุ่มแถวบนของ Series */
+    .actions-top{ display:flex; align-items:center; gap:10px; margin:10px 0; flex-wrap:wrap; }
+    .actions-left{ display:flex; gap:10px; align-items:center; flex-wrap:wrap; }
+    .actions-right{ display:flex; gap:8px; align-items:center; margin-left:auto; }
+    @media (min-width:600px){ .actions-top{ flex-wrap:nowrap; } }
   </style>
 </head>
 <body>
@@ -131,13 +154,12 @@
     </div>
 
     <div class="main">
-      <!-- LEFT: Overall + Next Bet + Series list -->
       <section>
         <div class="stats">
           <div class="total" id="totalProfit">0</div>
         </div>
 
-        <!-- Next Bet (ไม่ sticky, หุบ/โชว์อัตโนมัติ + ปุ่ม FAB) -->
+        <!-- Next Bet -->
         <div class="card scroll-collapse" id="nextBetCard" style="margin-top:12px">
           <h2>🎮 Next Bet</h2>
           <div class="form-group">
@@ -170,12 +192,10 @@
         <!-- Series list -->
         <div id="seriesList"></div>
       </section>
-
-      <!-- RIGHT: (empty on desktop; reserved) -->
       <section></section>
     </div>
 
-    <!-- BOTTOM: Series settings -->
+    <!-- Series settings -->
     <section class="card" id="seriesSettingsSection" style="margin:0 16px 16px;">
       <h2>📊 Series Settings</h2>
       <div class="form-group">
@@ -189,7 +209,7 @@
       </div>
       <div class="controls-row">
         <button class="btn" onclick="createNewSeries()">📝 New Series</button>
-        <button class="btn gray" onclick="resetAll()">🗑️ Reset All</button>
+        <button class="btn ghost" onclick="resetAll()">🗑️ Reset All</button>
       </div>
     </section>
   </div>
@@ -197,7 +217,7 @@
   <!-- FAB -->
   <button class="fab" id="fabShow"><span>📋</span> Next Bet</button>
 
-  <!-- Modal -->
+  <!-- Random Modal -->
   <div class="modal hidden" id="randomModal" role="dialog" aria-modal="true" aria-labelledby="randTitle">
     <div class="modal-card">
       <div class="modal-head">
@@ -209,7 +229,7 @@
       </div>
       <div class="controls-row" style="padding:12px 16px;">
         <button class="btn" onclick="doRandom()">🔀 Re-roll</button>
-        <button class="btn gray" onclick="closeRandom()">Close</button>
+        <button class="btn ghost" onclick="closeRandom()">Close</button>
       </div>
     </div>
   </div>
@@ -368,7 +388,6 @@
   }
 
   function updateDisplay(){
-    // sequence chips
     const fc = document.getElementById('fibSequence');
     if(fc){
       fc.innerHTML='';
@@ -377,7 +396,6 @@
       });
     }
 
-    // series selector
     const sel = document.getElementById('selectedSeries');
     if(sel){
       sel.innerHTML='<option value="">— Choose —</option>';
@@ -448,8 +466,8 @@
         const btnL = document.createElement('button'); btnL.className = 'btn bad'; btnL.textContent = '❌ Lose'; btnL.onclick = function(){ recordResult(s.id, false); };
         left.appendChild(btnW); left.appendChild(btnL);
       }
-      const btnC = document.createElement('button'); btnC.className = 'btn sm gray'; btnC.textContent = 'Close'; btnC.onclick = function(){ completeSeries(s.id); };
-      const btnD = document.createElement('button'); btnD.className = 'btn sm bad'; btnD.style.filter = 'none'; btnD.textContent = 'Delete'; btnD.onclick = function(){ deleteSeries(s.id); };
+      const btnC = document.createElement('button'); btnC.className = 'btn sm ghost'; btnC.textContent = 'Close'; btnC.onclick = function(){ completeSeries(s.id); };
+      const btnD = document.createElement('button'); btnD.className = 'btn sm ghost danger'; btnD.textContent = 'Delete'; btnD.onclick = function(){ deleteSeries(s.id); };
       right.appendChild(btnC); right.appendChild(btnD);
 
       actionsTop.appendChild(left); actionsTop.appendChild(right); div.appendChild(actionsTop);
@@ -519,8 +537,8 @@
   function closeRandom(){ const m = document.getElementById('randomModal'); if(!m) return; m.classList.add('hidden'); }
   function doRandom(){ rollAll(); }
 
-  // ====== Hide-on-scroll + FAB ======
-  (function initHideOnScroll(){
+  // ====== Hide-on-scroll + FAB + Keyboard-safe ======
+  (function initUI(){
     const header = document.getElementById('appHeader');
     const nextBet = document.getElementById('nextBetCard');
     const fab = document.getElementById('fabShow');
@@ -529,11 +547,11 @@
     const mql = window.matchMedia('(max-width: 900px)');
     let lastY = window.scrollY || 0;
     let ticking = false;
+    let lockUI = false; // ล็อกตอนพิมพ์
     const THRESH = 12;
 
     function updateFab(){
-      // โชว์ FAB เมื่อ Next Bet ถูกหุบ และอยู่ในจอเล็กเท่านั้น
-      if(mql.matches && nextBet.classList.contains('hidden')) fab.classList.add('show');
+      if(mql.matches && nextBet.classList.contains('hidden') && !document.body.classList.contains('kb')) fab.classList.add('show');
       else fab.classList.remove('show');
     }
 
@@ -544,35 +562,54 @@
         const y = window.scrollY || 0;
         const dy = y - lastY;
 
-        if(mql.matches){ // mobile only
-          if(dy > THRESH){
-            // scroll down -> hide
-            header.classList.add('hidden');
-            nextBet.classList.add('hidden');
-          }else if(dy < -THRESH){
-            // scroll up -> show
-            header.classList.remove('hidden');
-            nextBet.classList.remove('hidden');
+        if(mql.matches){
+          if(!lockUI){ // ปิด hide-on-scroll ชั่วคราวระหว่างพิมพ์
+            if(dy > THRESH){ header.classList.add('hidden'); nextBet.classList.add('hidden'); }
+            else if(dy < -THRESH){ header.classList.remove('hidden'); nextBet.classList.remove('hidden'); }
+            updateFab();
+          }else{
+            header.classList.add('hidden'); nextBet.classList.remove('hidden');
           }
-          updateFab();
         }else{
-          header.classList.remove('hidden');
-          nextBet.classList.remove('hidden');
+          header.classList.remove('hidden'); nextBet.classList.remove('hidden');
           updateFab();
         }
 
-        lastY = y;
-        ticking = false;
+        lastY = y; ticking = false;
       });
     }
 
-    // ปุ่ม FAB เรียก Next Bet
+    // ปุ่ม FAB แสดงการ์ด
     fab.addEventListener('click', ()=>{
       nextBet.classList.remove('hidden');
       header.classList.remove('hidden');
       updateFab();
-      // เลื่อนกลับขึ้นเล็กน้อยให้เห็นการ์ด
       window.scrollTo({top: Math.max(0, window.scrollY - 80), behavior:'smooth'});
+    });
+
+    // โหมด keyboard-safe: focus/blur ในการ์ด Next Bet
+    const inputs = nextBet.querySelectorAll('input,select,textarea');
+    inputs.forEach(el=>{
+      el.addEventListener('focus', ()=>{
+        document.body.classList.add('kb');
+        lockUI = true;
+        header.classList.add('hidden');
+        nextBet.classList.remove('hidden');
+        updateFab();
+        // เลื่อนให้ฟิลด์อยู่กลางจอ
+        setTimeout(()=>{ try{ el.scrollIntoView({block:'center', behavior:'smooth'}); }catch(e){} }, 60);
+      });
+      el.addEventListener('blur', ()=>{
+        // รอให้โฟกัสย้ายเสร็จค่อยเช็คว่ายังอยู่ในการ์ดหรือไม่
+        setTimeout(()=>{
+          const active = document.activeElement;
+          if(!nextBet.contains(active)){
+            document.body.classList.remove('kb');
+            lockUI = false;
+            updateFab();
+          }
+        }, 80);
+      });
     });
 
     // bind classes
@@ -581,11 +618,7 @@
 
     window.addEventListener('scroll', onScroll, {passive:true});
     window.addEventListener('resize', ()=>{
-      // reset เมื่อสลับ breakpoint
-      if(!mql.matches){
-        header.classList.remove('hidden');
-        nextBet.classList.remove('hidden');
-      }
+      if(!mql.matches){ header.classList.remove('hidden'); nextBet.classList.remove('hidden'); document.body.classList.remove('kb'); }
       updateFab();
     });
     updateFab();
